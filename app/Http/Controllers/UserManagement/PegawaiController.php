@@ -81,7 +81,7 @@ class PegawaiController extends Controller
             'imagePegawai'  => 'mimes:png,jpg,jpeg',
         ], $messages);
 
-        $pegawai = Pegawai::where('nip', $id)->first();
+        $pegawai = Pegawai::where('id', $id)->first();
 
         if ($request->file('imagePegawai')) {
             $pathavatar     = 'storage/avatar/' . $pegawai->image_pegawai;
@@ -95,7 +95,7 @@ class PegawaiController extends Controller
             $request->file('imagePegawai')->storeAs('avatar', $newImagePegawai);
             $request['imagePegawai'] = $newImagePegawai;
 
-            $updatepegawai = Pegawai::where('nip', $id)
+            $updatepegawai = Pegawai::where('id', $id)
                 ->update([
                     'nama'          => $request->nama,
                     'alamat'        => $request->alamat,
@@ -104,7 +104,7 @@ class PegawaiController extends Controller
                     'image_pegawai' => $newImagePegawai,
                 ]);
         } else {
-            $updatepegawai = Pegawai::where('nip', $id)
+            $updatepegawai = Pegawai::where('id', $id)
                 ->update([
                     'nama'          => $request->nama,
                     'alamat'        => $request->alamat,

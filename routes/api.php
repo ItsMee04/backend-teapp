@@ -46,11 +46,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('pegawai/getPegawai', [PegawaiController::class, 'getPegawai']);
     Route::post('pegawai/storePegawai', [PegawaiController::class, 'storePegawai']);
     Route::get('pegawai/getPegawaiByID/{id}', [PegawaiController::class, 'getPegawaiByID']);
-    Route::post('pegawai/updatePegawai/{id}', [PegawaiController::class, 'updatePegawai']);
+    Route::put('pegawai/updatePegawai/{id}', [PegawaiController::class, 'updatePegawai']);
     Route::delete('pegawai/deletePegawai/{id}', [PegawaiController::class, 'deletePegawai']);
 
     //API USERS
     Route::get('users/getUsers', [UserController::class, 'getUsers']);
     Route::get('users/getUsersByID/{id}', [UserController::class, 'getUsersByID']);
-    Route::post('users/updateUsers/{id}', [UserController::class, 'updateUsers']);
+    Route::put('users/updateUsers/{id}', [UserController::class, 'updateUsers']);
 });
