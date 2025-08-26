@@ -32,7 +32,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('jabatan/getJabatan', [JabatanController::class, 'getJabatan']);
     Route::post('jabatan/storeJabatan', [JabatanController::class, 'storeJabatan']);
     Route::get('jabatan/getJabatanByID/{id}', [JabatanController::class, 'getJabatanByID']);
-    Route::post('jabatan/updateJabatan/{id}', [JabatanController::class, 'updateJabatan']);
+    Route::put('jabatan/updateJabatan/{id}', [JabatanController::class, 'updateJabatan']);
     Route::delete('jabatan/deleteJabatan/{id}', [JabatanController::class, 'deleteJabatan']);
 
     //API ROLE
