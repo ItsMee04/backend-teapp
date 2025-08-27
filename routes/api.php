@@ -2,6 +2,9 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Produk\DiskonController;
+use App\Http\Controllers\Produk\KondisiController;
+use App\Http\Controllers\Produk\JenisProdukController;
 use App\Http\Controllers\Authentication\AuthController;
 use App\Http\Controllers\UserManagement\RoleController;
 use App\Http\Controllers\UserManagement\UserController;
@@ -53,4 +56,25 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('users/getUsers', [UserController::class, 'getUsers']);
     Route::get('users/getUsersByID/{id}', [UserController::class, 'getUsersByID']);
     Route::put('users/updateUsers/{id}', [UserController::class, 'updateUsers']);
+
+    //API KONDISI
+    Route::get('kondisi/getKondisi', [KondisiController::class, 'getKondisi']);
+    Route::post('kondisi/storeKondisi', [KondisiController::class, 'storeKondisi']);
+    Route::get('kondisi/getKondisiByID/{id}', [KondisiController::class, 'getKondisiByID']);
+    Route::put('kondisi/updateKondisi/{id}', [KondisiController::class, 'updateKondisi']);
+    Route::delete('kondisi/deleteKondisi/{id}', [KondisiController::class, 'deletekondisi']);
+
+    //API DISKON
+    Route::get('diskon/getDiskon', [DiskonController::class, 'getDiskon']);
+    Route::post('diskon/storeDiskon', [DiskonController::class, 'storeDiskon']);
+    Route::get('diskon/getDiskonByID/{id}', [DiskonController::class, 'getDiskonByID']);
+    Route::put('diskon/updateDiskon/{id}', [DiskonController::class, 'updateDiskon']);
+    Route::delete('diskon/deleteDiskon/{id}', [DiskonController::class, 'deleteDiskon']);
+
+    //API JENISPRODUK
+    Route::get('jenisproduk/getJenisProduk', [JenisProdukController::class, 'getJenisProduk']);
+    Route::post('jenisproduk/storeJenisProduk', [JenisProdukController::class, 'storeJenisProduk']);
+    Route::get('jenisproduk/getJenisProdukByID/{id}', [JenisProdukController::class, 'getJenisProdukByID']);
+    Route::put('jenisproduk/updateJenisProduk/{id}', [JenisProdukController::class, 'updateJenisProduk']);
+    Route::delete('jenisproduk/deleteJenisProduk/{id}', [JenisProdukController::class, 'deleteJenisProduk']);
 });
