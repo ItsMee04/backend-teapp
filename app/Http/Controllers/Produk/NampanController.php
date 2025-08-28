@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Produk;
 
 use Carbon\Carbon;
 use App\Models\Nampan;
+use App\Models\NampanProduk;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -11,23 +12,18 @@ class NampanController extends Controller
 {
     public function getNampan()
     {
-        // $nampan = Nampan::where('status', 1)
-        //     ->with(['jenisProduk'])
-        //     ->withCount([
-        //         'produk' => function ($query) {
-        //             $query->where('status', 1); // hanya hitung produk dengan status = 1
-        //         }
-        //     ])
-        //     ->get();
+        $totalProdukAll = NampanProduk::where('status', 1)->count();
 
-        // $totalProdukAll = NampanProduk::where('status', 1)->count();
-
-        $nampan = Nampan::where('status',1)->with(['JenisProduk'])->get();
+        $nampan = Nampan::where('status',1)->with(['JenisProduk'])->withCount([
+                'produk' => function ($query) {
+                    $query->where('status', 1); // hanya hitung produk dengan status = 1
+                }
+            ])->get();
 
         return response()->json([
             'success' => true,
             'message' => 'Data Nampan Berhasil Ditemukan',
-            // 'Total' => $totalProdukAll,
+            'Total' => $totalProdukAll,
             'Data' => $nampan
         ]);
     }

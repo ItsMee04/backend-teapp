@@ -91,5 +91,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('nampan/getNampan', [NampanController::class, 'getNampan']);
     Route::post('nampan/storeNampan', [NampanController::class, 'storeNampan']);
     Route::get('nampan/getNampanByID/{id}', [NampanController::class, 'getNampanByID']);
-    Route::post('nampan/updateNampan/{id}', [NampanController::class, 'updateNampan']);
+    Route::put('nampan/updateNampan/{id}', [NampanController::class, 'updateNampan']);
 });
