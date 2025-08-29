@@ -8,6 +8,7 @@ use App\Http\Controllers\Produk\ProdukController;
 use App\Http\Controllers\Produk\KondisiController;
 use App\Http\Controllers\Produk\JenisProdukController;
 use App\Http\Controllers\Authentication\AuthController;
+use App\Http\Controllers\Produk\NampanProdukController;
 use App\Http\Controllers\UserManagement\RoleController;
 use App\Http\Controllers\UserManagement\UserController;
 use App\Http\Controllers\UserManagement\JabatanController;
@@ -92,4 +93,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('nampan/storeNampan', [NampanController::class, 'storeNampan']);
     Route::get('nampan/getNampanByID/{id}', [NampanController::class, 'getNampanByID']);
     Route::put('nampan/updateNampan/{id}', [NampanController::class, 'updateNampan']);
+
+    //API NAMPAN PRODUK
+    Route::get('nampanProduk/getNampanProduk/{id}', [NampanProdukController::class, 'getNampanProduk']);
+    Route::get('nampanProduk/getProdukNampan/{id}', [NampanProdukController::class, 'getProdukNampan']);
+    Route::post('nampanproduk/storeProdukNampan/{id}', [NampanProdukController::class, 'storeProdukNampan']);
+    Route::delete('nampanproduk/deleteNampanProduk/{id}', [NampanProdukController::class, 'deleteNampanProduk']);
 });
