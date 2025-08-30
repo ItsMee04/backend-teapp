@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('nampan', 100);
             $table->unsignedBigInteger('jenisproduk_id');
             $table->date('tanggal');
-            $table->integer('status_final')->default(1);
             $table->integer('status');
             $table->timestamps();
 

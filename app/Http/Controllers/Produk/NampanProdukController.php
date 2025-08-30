@@ -69,21 +69,6 @@ class NampanProdukController extends Controller
 
         $nampan = Nampan::findOrFail($id);
 
-        // Validasi jenis input berdasarkan status final nampan
-        if ($nampan->status_final == 1 && $jenis != 'awal') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Nampan belum difinal, hanya boleh input produk dengan jenis "awal".'
-            ]);
-        }
-
-        if ($nampan->status_final == 2 && $jenis != 'masuk') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Nampan sudah difinal, hanya boleh input produk dengan jenis "masuk".'
-            ]);
-        }
-
         // Cek produk yang sudah ada aktif (status=1) di nampan ini dan jenis 'awal' atau 'masuk'
         $existingProducts = NampanProduk::where('status', 1)
             ->where('nampan_id', $id)
@@ -102,8 +87,8 @@ class NampanProdukController extends Controller
             $nampanProducts[] = NampanProduk::create([
                 'nampan_id'       => $id,
                 'produk_id'       => $produk_id,
-                'jenis'           => $jenis,
-                'tanggalmasuk'    => Carbon::today()->format('Y-m-d'),
+                'jenis'           => "awal",
+                'tanggal'         => Carbon::today()->format('Y-m-d'),
                 'status'          => 1,
                 'oleh'            => Auth::user()->id,
             ]);

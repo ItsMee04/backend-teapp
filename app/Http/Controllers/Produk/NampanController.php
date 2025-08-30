@@ -44,7 +44,6 @@ class NampanController extends Controller
             'nampan'          =>  $request->nampan,
             'tanggal'         =>  Carbon::now(),
             'status'          =>  1,
-            'status_final'    =>  1,
         ]);
 
         return response()->json(['success' => true, 'message' => 'Data Nampan Berhasil Disimpan']);
