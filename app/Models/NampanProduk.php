@@ -16,8 +16,7 @@ class NampanProduk extends Model
         'nampan_id',
         'produk_id',
         'jenis',
-        'tanggalmasuk',
-        'tanggalkeluar',
+        'tanggal',
         'oleh',
         'status',
     ];
