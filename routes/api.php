@@ -8,6 +8,7 @@ use App\Http\Controllers\Produk\ProdukController;
 use App\Http\Controllers\Produk\KondisiController;
 use App\Http\Controllers\Produk\JenisProdukController;
 use App\Http\Controllers\Authentication\AuthController;
+use App\Http\Controllers\Cetak\CetakBarcodeProduk;
 use App\Http\Controllers\Produk\NampanProdukController;
 use App\Http\Controllers\UserManagement\RoleController;
 use App\Http\Controllers\UserManagement\UserController;
@@ -98,5 +99,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('nampanProduk/getNampanProduk/{id}', [NampanProdukController::class, 'getNampanProduk']);
     Route::get('nampanProduk/getProdukNampan/{id}', [NampanProdukController::class, 'getProdukNampan']);
     Route::post('nampanProduk/storeProdukNampan/{id}', [NampanProdukController::class, 'storeProdukNampan']);
-    Route::delete('nampanproduk/deleteNampanProduk/{id}', [NampanProdukController::class, 'deleteNampanProduk']);
+    Route::post('nampanproduk/pindahProdukNampan', [NampanProdukController::class, 'pindahProduk']);
+    Route::get('/produk/{id}/get-signed-url', [CetakBarcodeProduk::class, 'getSignedPrintUrl']);
 });
+
+
+Route::get('/produk/{id}/cetakbarcodeproduk', [CetakBarcodeProduk::class, 'PrintBarcodeProduk'])->name('produk.cetak_barcode'); // Nama route yang baru

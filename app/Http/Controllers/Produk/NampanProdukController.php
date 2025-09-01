@@ -7,6 +7,8 @@ use App\Models\Nampan;
 use App\Models\Produk;
 use App\Models\NampanProduk;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 
@@ -87,7 +89,7 @@ class NampanProdukController extends Controller
             $nampanProducts[] = NampanProduk::create([
                 'nampan_id'       => $id,
                 'produk_id'       => $produk_id,
-                'jenis'           => "awal",
+                'jenis'           => "masuk",
                 'tanggal'         => Carbon::today()->format('Y-m-d'),
                 'status'          => 1,
                 'oleh'            => Auth::user()->id,
@@ -95,6 +97,70 @@ class NampanProdukController extends Controller
         }
 
         return response()->json(['success' => true, 'message' => 'Produk berhasil ditambahkan']);
+    }
+
+    public function pindahProduk(Request $request)
+    {
+        $request->validate([
+            'produkId' => [
+                'required',
+                'integer',
+                // Cek apakah produk_id ada DAN statusnya aktif
+                Rule::exists('nampan_produk', 'produk_id')->where(function ($query) {
+                    return $query->where('status', 1);
+                }),
+            ],
+            'nampanAsalId' => 'required|integer|exists:nampan,id',
+            'tujuanNampanId' => 'required|integer|exists:nampan,id',
+        ]);
+
+        $produkId = $request->produkId;
+        $nampanAsalId = $request->nampanAsalId;
+        $tujuanNampanId = $request->tujuanNampanId;
+
+        try {
+            DB::beginTransaction();
+
+            // Cari entri produk yang aktif di nampan asal yang spesifik
+            $produkDiNampanAsal = NampanProduk::where('produk_id', $produkId)
+                ->where('nampan_id', $nampanAsalId)
+                ->where('status', 1)
+                ->first();
+
+            if (!$produkDiNampanAsal) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan di nampan asal yang spesifik.'], 404);
+            }
+
+            // Cek jika nampan asal dan tujuan sama
+            if ($produkDiNampanAsal->nampan_id == $tujuanNampanId) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => 'Produk sudah berada di nampan tujuan.'], 422);
+            }
+
+            // Update entri produk di nampan asal (jadi pindah)
+            $produkDiNampanAsal->update([
+                'jenis' => 'pindah',
+                'status' => 0,
+            ]);
+
+            // Buat entri baru untuk produk yang masuk ke nampan tujuan
+            NampanProduk::create([
+                'nampan_id' => $tujuanNampanId,
+                'produk_id' => $produkId,
+                'jenis' => 'masuk',
+                'tanggal' => now(),
+                'oleh' => auth()->user()->id,
+                'status' => 1,
+            ]);
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Produk berhasil dipindahkan.'], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Gagal memindahkan produk. Silakan coba lagi. ' . $e->getMessage()], 500);
+        }
     }
 
     // Contoh fungsi getBeratProduk (bisa sesuaikan dengan model produkmu)
