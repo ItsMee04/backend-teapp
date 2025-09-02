@@ -98,6 +98,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     //API NAMPAN PRODUK
     Route::get('nampanProduk/getNampanProduk/{id}', [NampanProdukController::class, 'getNampanProduk']);
     Route::get('nampanProduk/getProdukNampan/{id}', [NampanProdukController::class, 'getProdukNampan']);
+    Route::get('nampanProduk/getProdukByJenis/{id}', [NampanProdukController::class, 'getProdukByJenis']);
     Route::post('nampanProduk/storeProdukNampan/{id}', [NampanProdukController::class, 'storeProdukNampan']);
     Route::post('nampanproduk/pindahProdukNampan', [NampanProdukController::class, 'pindahProduk']);
     Route::get('/produk/{id}/get-signed-url', [CetakBarcodeProduk::class, 'getSignedPrintUrl']);

@@ -43,6 +43,32 @@ class NampanProdukController extends Controller
         ]);
     }
 
+    public function getProdukByJenis($id)
+    {
+        // Cari semua produk dengan jenisproduk_id yang sesuai
+        // dan pastikan statusnya aktif (misal, status = 1).
+        $produk = Produk::with('jenisproduk')
+            ->where('jenisproduk_id', $id)
+            ->where('status', 1) // Asumsi 1 adalah status aktif
+            ->get();
+
+        // Periksa apakah ada produk yang ditemukan
+        if ($produk->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada produk yang ditemukan untuk jenis ini.',
+                'Data' => []
+            ], 404);
+        }
+
+        // Kembalikan data produk dalam format JSON
+        return response()->json([
+            'success' => true,
+            'message' => 'Data Produk Berhasil Ditemukan',
+            'Data' => $produk
+        ]);
+    }
+
     public function getProdukNampan($id)
     {
         $nampan = Nampan::where('id', $id)->first();
@@ -64,35 +90,37 @@ class NampanProdukController extends Controller
     {
         $request->validate([
             'items' => 'required|array',
-            'jenis' => 'required|in:awal,masuk,keluar',
         ]);
 
-        $jenis = $request->jenis;
 
         $nampan = Nampan::findOrFail($id);
 
-        // Cek produk yang sudah ada aktif (status=1) di nampan ini dan jenis 'awal' atau 'masuk'
-        $existingProducts = NampanProduk::where('status', 1)
-            ->where('nampan_id', $id)
+        // ✅ PERBAIKAN: Cek produk yang masih aktif di nampan lain
+        // Eager load relasi 'nampan' untuk mendapatkan nama nampan yang bermasalah
+        $conflictingProducts = NampanProduk::with('nampan')
+            ->where('status', 1)
+            ->where('nampan_id', '!=', $id) // Cari di nampan yang berbeda
             ->whereIn('produk_id', $request->items)
-            ->pluck('produk_id')
-            ->toArray();
+            ->get();
 
-        if (!empty($existingProducts)) {
-            return response()->json(['success' => false, 'message' => 'Beberapa produk sudah ada.']);
+        if ($conflictingProducts->isNotEmpty()) {
+            $errorMessages = [];
+            foreach ($conflictingProducts as $product) {
+                $nampanName = $product->nampan ? $product->nampan->nampan : 'nampan lain';
+                $errorMessages[] = "Produk masih aktif di nampan **" . $nampanName . "**.";
+            }
+            return response()->json(['success' => false, 'message' => implode(' ', $errorMessages)]);
         }
 
         $nampanProducts = [];
-
         foreach ($request->items as $produk_id) {
-            // Ambil stokakhirproduk & berat dari record terakhir produk di nampan ini
             $nampanProducts[] = NampanProduk::create([
-                'nampan_id'       => $id,
-                'produk_id'       => $produk_id,
-                'jenis'           => "masuk",
-                'tanggal'         => Carbon::today()->format('Y-m-d'),
-                'status'          => 1,
-                'oleh'            => Auth::user()->id,
+                'nampan_id' => $id,
+                'produk_id' => $produk_id,
+                'jenis' => "masuk", // Sesuaikan dengan jenis yang benar
+                'tanggal' => Carbon::today()->format('Y-m-d'),
+                'status' => 1,
+                'oleh' => Auth::user()->id,
             ]);
         }
 
