@@ -5,10 +5,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Produk\DiskonController;
 use App\Http\Controllers\Produk\NampanController;
 use App\Http\Controllers\Produk\ProdukController;
+use App\Http\Controllers\Cetak\CetakBarcodeProduk;
 use App\Http\Controllers\Produk\KondisiController;
 use App\Http\Controllers\Produk\JenisProdukController;
 use App\Http\Controllers\Authentication\AuthController;
-use App\Http\Controllers\Cetak\CetakBarcodeProduk;
+use App\Http\Controllers\Pelanggan\PelangganController;
 use App\Http\Controllers\Produk\NampanProdukController;
 use App\Http\Controllers\UserManagement\RoleController;
 use App\Http\Controllers\UserManagement\UserController;
@@ -102,6 +103,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('nampanProduk/storeProdukNampan/{id}', [NampanProdukController::class, 'storeProdukNampan']);
     Route::post('nampanproduk/pindahProdukNampan', [NampanProdukController::class, 'pindahProduk']);
     Route::get('/produk/{id}/get-signed-url', [CetakBarcodeProduk::class, 'getSignedPrintUrl']);
+
+    //API PELANGGAN
+    Route::get('pelanggan/getPelanggan', [PelangganController::class, 'getPelanggan']);
+    Route::post('pelanggan/storePelanggan', [PelangganController::class, 'storePelanggan']);
+    Route::get('pelanggan/getPelangganByID/{id}', [PelangganController::class, 'getPelangganByID']);
+    Route::post('pelanggan/updatePelanggan/{id}', [PelangganController::class, 'updatePelanggan']);
+    Route::delete('pelanggan/deletePelanggan/{id}', [PelangganController::class, 'deletePelanggan']);
 });
 
 
