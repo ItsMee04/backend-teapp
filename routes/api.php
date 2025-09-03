@@ -7,6 +7,7 @@ use App\Http\Controllers\Produk\NampanController;
 use App\Http\Controllers\Produk\ProdukController;
 use App\Http\Controllers\Cetak\CetakBarcodeProduk;
 use App\Http\Controllers\Produk\KondisiController;
+use App\Http\Controllers\Suplier\SuplierController;
 use App\Http\Controllers\Produk\JenisProdukController;
 use App\Http\Controllers\Authentication\AuthController;
 use App\Http\Controllers\Pelanggan\PelangganController;
@@ -108,8 +109,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('pelanggan/getPelanggan', [PelangganController::class, 'getPelanggan']);
     Route::post('pelanggan/storePelanggan', [PelangganController::class, 'storePelanggan']);
     Route::get('pelanggan/getPelangganByID/{id}', [PelangganController::class, 'getPelangganByID']);
-    Route::post('pelanggan/updatePelanggan/{id}', [PelangganController::class, 'updatePelanggan']);
+    Route::put('pelanggan/updatePelanggan/{id}', [PelangganController::class, 'updatePelanggan']);
     Route::delete('pelanggan/deletePelanggan/{id}', [PelangganController::class, 'deletePelanggan']);
+
+    Route::get('suplier/getSuplier', [SuplierController::class, 'getSuplier']);
+    Route::post('suplier/storeSuplier', [SuplierController::class, 'storeSuplier']);
+    Route::get('suplier/getSuplierByID/{id}', [SuplierController::class, 'getSuplierByID']);
+    Route::put('suplier/updateSuplier/{id}', [SuplierController::class, 'updateSuplier']);
+    Route::delete('suplier/deleteSuplier/{id}', [SuplierController::class, 'deleteSuplier']);
 });
 
 
