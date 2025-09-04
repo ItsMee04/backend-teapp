@@ -47,25 +47,39 @@ class NampanProdukController extends Controller
     {
         // Cari semua produk dengan jenisproduk_id yang sesuai
         // dan pastikan statusnya aktif (misal, status = 1).
-        $produk = Produk::with('jenisproduk')
-            ->where('jenisproduk_id', $id)
-            ->where('status', 1) // Asumsi 1 adalah status aktif
+        $products = DB::table('nampan_produk as np')
+            ->select('n.nampan', 'p.id', 'p.nama', 'p.image_produk', 'p.berat', 'p.harga_jual')
+            ->leftJoin('produk as p', 'np.produk_id', '=', 'p.id')
+            ->leftJoin('nampan as n', 'np.nampan_id', '=', 'n.id')
+            ->leftJoin('jenis_produk as jp', 'n.jenisproduk_id', '=', 'jp.id')
+            ->where('jp.id', $id)
+            ->where('np.status', 1)
             ->get();
 
+        // Tambahkan hargatotal ke setiap produk dalam koleksi
+        $products->each(function ($item) {
+            // Pastikan properti berat dan harga_jual ada dan ubah ke tipe float
+            $berat = (float) $item->berat;
+            $harga_jual = (float) $item->harga_jual;
+
+            // Hitung hargatotal dan tambahkan ke objek
+            $item->hargatotal = $harga_jual * $berat;
+        });
+
         // Periksa apakah ada produk yang ditemukan
-        if ($produk->isEmpty()) {
+        if ($products->isEmpty()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Tidak ada produk yang ditemukan untuk jenis ini.',
                 'Data' => []
-            ], 404);
+            ]);
         }
 
         // Kembalikan data produk dalam format JSON
         return response()->json([
             'success' => true,
             'message' => 'Data Produk Berhasil Ditemukan',
-            'Data' => $produk
+            'Data' => $products
         ]);
     }
 
@@ -237,5 +251,20 @@ class NampanProdukController extends Controller
         ]);
 
         return response()->json(['success' => true, 'message' => 'Produk Berhasil Dihapus.']);
+    }
+
+    public function getKategoriByJenis()
+    {
+        $kategori = DB::table('jenis_produk as jp')
+            ->select('jp.id', 'jp.jenis_produk', 'jp.image_jenis_produk', DB::raw('COUNT(np.produk_id) as total_produk'))
+            ->leftJoin('nampan as n', 'jp.id', '=', 'n.jenisproduk_id')
+            ->leftJoin('nampan_produk as np', function ($join) {
+                $join->on('n.id', '=', 'np.nampan_id')
+                    ->where('np.status', '=', 1);
+            })
+            ->groupBy('jp.id', 'jp.jenis_produk', 'jp.image_jenis_produk')
+            ->get();
+
+        return response()->json(['success' => true, 'message' => 'Data Kategori Berhasil Ditemukan', 'Data' => $kategori]);
     }
 }

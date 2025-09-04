@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\POS\KeranjangController;
 use App\Http\Controllers\Produk\DiskonController;
 use App\Http\Controllers\Produk\NampanController;
 use App\Http\Controllers\Produk\ProdukController;
@@ -105,6 +106,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('nampanProduk/storeProdukNampan/{id}', [NampanProdukController::class, 'storeProdukNampan']);
     Route::post('nampanproduk/pindahProdukNampan', [NampanProdukController::class, 'pindahProduk']);
     Route::get('/produk/{id}/get-signed-url', [CetakBarcodeProduk::class, 'getSignedPrintUrl']);
+    Route::get('/nampanProduk/getKategoriByJenis', [NampanProdukController::class, 'getKategoriByJenis']);
 
     //API PELANGGAN
     Route::get('pelanggan/getPelanggan', [PelangganController::class, 'getPelanggan']);
@@ -113,11 +115,19 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('pelanggan/updatePelanggan/{id}', [PelangganController::class, 'updatePelanggan']);
     Route::delete('pelanggan/deletePelanggan/{id}', [PelangganController::class, 'deletePelanggan']);
 
+    //API SUPLIER
     Route::get('suplier/getSuplier', [SuplierController::class, 'getSuplier']);
     Route::post('suplier/storeSuplier', [SuplierController::class, 'storeSuplier']);
     Route::get('suplier/getSuplierByID/{id}', [SuplierController::class, 'getSuplierByID']);
     Route::put('suplier/updateSuplier/{id}', [SuplierController::class, 'updateSuplier']);
     Route::delete('suplier/deleteSuplier/{id}', [SuplierController::class, 'deleteSuplier']);
+
+    Route::get('pos/getKeranjang', [KeranjangController::class, 'getKeranjang']);
+    Route::get('pos/getKodeKeranjang', [KeranjangController::class, 'getKodeKeranjang']);
+    // Route::get('transaksi/getKodeTransaksi', [TransaksiController::class, 'getKodeTransaksi']);
+    Route::post('keranjang/addToCart', [KeranjangController::class, 'addToCart']);
+    Route::delete('keranjang/deleteKeranjangAll', [KeranjangController::class, 'deleteKeranjangAll']);
+    Route::delete('keranjang/deleteKeranjangByID/{id}', [KeranjangController::class, 'deleteKeranjangByID']);
 });
 
 
