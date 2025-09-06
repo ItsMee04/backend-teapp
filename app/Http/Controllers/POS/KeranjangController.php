@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\POS;
 
 use Carbon\Carbon;
+use App\Models\Produk;
 use App\Models\Keranjang;
+use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
@@ -11,76 +13,298 @@ use Illuminate\Support\Facades\Auth;
 
 class KeranjangController extends Controller
 {
-    private function generateKodeKeranjang()
+    /**
+     * Menampilkan daftar produk yang ada di keranjang untuk user yang sedang aktif.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getKeranjang()
     {
-        // Cek apakah ada keranjang aktif (status = 1)
-        $lastActive = DB::table('keranjang')
+        try {
+            // 1. Cari transaksi yang sedang aktif (status = 1) untuk user ini
+            $activeTransaksi = Transaksi::where('oleh', Auth::user()->id)
+                ->where('status', 1)
+                ->first();
+
+            // Jika tidak ada transaksi aktif, kembalikan array kosong
+            if (!$activeTransaksi) {
+                return response()->json([
+                    'success' => true,
+                    'Data' => []
+                ]);
+            }
+
+            // 2. Ambil semua produk di keranjang yang terkait dengan transaksi aktif
+            $keranjang = Keranjang::where('kodetransaksi', $activeTransaksi->kodetransaksi)
+                ->where('status', 1) // Hanya ambil item yang aktif
+                ->with('produk') // Eager loading untuk mendapatkan detail produk
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'Data' => $keranjang
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat keranjang. ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Mengambil kode transaksi yang sedang aktif untuk user.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getKodeTransaksi()
+    {
+        try {
+            // Cari transaksi yang sedang aktif (status = 1) untuk user ini
+            $activeTransaksi = Transaksi::where('oleh', Auth::user()->id)
+                ->where('status', 1)
+                ->first();
+
+            // Jika ada transaksi aktif, kembalikan kodenya
+            if ($activeTransaksi) {
+                return response()->json([
+                    'success' => true,
+                    'kode' => $activeTransaksi->kodetransaksi,
+                    'message' => 'Kode transaksi berhasil ditemukan.'
+                ]);
+            }
+
+            // Jika tidak ada transaksi aktif
+            return response()->json([
+                'success' => true,
+                'kode' => null,
+                'message' => 'Tidak ada transaksi aktif.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mendapatkan kode transaksi. ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Menambahkan produk ke keranjang belanja.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function addToCart(Request $request)
+    {
+        // 1. Cari transaksi yang sedang aktif (status = 1) untuk user ini
+        $activeTransaksi = Transaksi::where('oleh', Auth::user()->id)
             ->where('status', 1)
-            ->orderBy('kodekeranjang', 'desc')
             ->first();
 
-        if ($lastActive) {
-            return $lastActive->kodekeranjang;
+        $kodeTransaksi = null;
+
+        // 2. Jika tidak ada transaksi aktif, buat transaksi baru
+        if (!$activeTransaksi) {
+            $kodeTransaksi = $this->generateKodeTransaksi();
+
+            // Masukkan hanya kode transaksi ke tabel transaksi
+            Transaksi::create([
+                'kodetransaksi' => $kodeTransaksi,
+                'oleh' => Auth::user()->id,
+                'status' => 1, // Status 1 menandakan transaksi sedang aktif
+            ]);
+        } else {
+            // Jika ada transaksi aktif, gunakan kode yang sudah ada
+            $kodeTransaksi = $activeTransaksi->kodetransaksi;
         }
 
-        // Timestamp sekarang
-        $now = Carbon::now()->format('YmdHis');
+        // Ambil data produk dari database berdasarkan ID yang dikirim
+        $produk = Produk::where('id', $request->id)->first();
+        if (!$produk) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Produk tidak ditemukan.'
+            ], 404);
+        }
 
-        // Random 3 digit untuk menghindari duplikasi
-        $random = rand(100, 999);
+        // Hitung total harga
+        $total = $produk->harga_jual * $produk->berat;
+        $terbilang = ucwords(trim($this->terbilang(abs($total)))) . ' Rupiah';
 
-        // Ambil nomor urut terakhir
-        $last = DB::table('keranjang')
+        // Cek apakah produk sudah ada di keranjang transaksi yang aktif
+        $existingProductInCart = Keranjang::where('kodetransaksi', $kodeTransaksi)
+            ->where('produk_id', $request->id)
+            ->where('status', 1)
+            ->first();
+
+        if ($existingProductInCart) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Produk ini sudah ada di keranjang'
+            ]);
+        }
+
+        // Siapkan data untuk dimasukkan ke tabel keranjang
+        $dataKeranjang = [
+            'kodetransaksi' => $kodeTransaksi,
+            'produk_id' => $request->id,
+            'harga_jual' => $produk->harga_jual,
+            'berat' => $produk->berat,
+            'karat' => $produk->karat,
+            'lingkar' => $produk->lingkar,
+            'panjang' => $produk->panjang,
+            'total' => $total,
+            'terbilang' => $terbilang,
+            'oleh' => Auth::user()->id,
+            'status' => 1, // Status 1 menandakan item ini berada di keranjang aktif
+        ];
+
+        // Simpan data ke database
+        $keranjang = Keranjang::create($dataKeranjang);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Produk Berhasil Ditambahkan',
+            'data' => $keranjang
+        ]);
+    }
+
+    /**
+     * Menghapus satu item dari keranjang dengan mengubah statusnya.
+     *
+     * @param int $id ID item di tabel keranjang
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteKeranjangApi($id)
+    {
+        try {
+            $keranjang = Keranjang::find($id);
+
+            if (!$keranjang) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Produk di keranjang tidak ditemukan.'
+                ], 404);
+            }
+
+            // Memastikan item yang akan dihapus dimiliki oleh user yang sedang login
+            if ($keranjang->oleh !== Auth::user()->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki hak untuk menghapus item ini.'
+                ], 403);
+            }
+
+            // Ubah status item menjadi 0 (dihapus/tidak aktif)
+            $keranjang->status = 0;
+            $keranjang->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Produk berhasil dihapus dari keranjang.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus produk. ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Mengosongkan seluruh keranjang belanja dengan mengubah status semua item menjadi 0.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function clearAllKeranjangApi()
+    {
+        try {
+            // Cari transaksi yang sedang aktif untuk user ini
+            $activeTransaksi = Transaksi::where('oleh', Auth::user()->id)
+                ->where('status', 1)
+                ->first();
+
+            // Jika ada transaksi aktif, ubah status semua item keranjang menjadi 0
+            if ($activeTransaksi) {
+                Keranjang::where('kodetransaksi', $activeTransaksi->kodetransaksi)
+                    ->where('status', 1)
+                    ->update(['status' => 0]);
+            }
+
+            // Selain mengubah status item di keranjang, kita juga harus mengubah status transaksi
+            // Karena tidak ada lagi item di dalamnya, transaksi ini tidak lagi 'aktif'.
+            if ($activeTransaksi) {
+                $activeTransaksi->status = 2; // Mengganti status menjadi 'dibatalkan'
+                $activeTransaksi->save();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Keranjang berhasil dikosongkan.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengosongkan keranjang. ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Fungsi helper untuk mengubah angka menjadi terbilang.
+     * Ini bisa dipindahkan ke helper atau service terpisah di aplikasi nyata.
+     */
+    private function terbilang($angka)
+    {
+        // Implementasi fungsi terbilang
+        $angka = abs($angka);
+        $baca = array('', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh', 'sebelas');
+        $temp = '';
+        if ($angka < 12) {
+            $temp = ' ' . $baca[$angka];
+        } else if ($angka < 20) {
+            $temp = $this->terbilang($angka - 10) . ' belas';
+        } else if ($angka < 100) {
+            $temp = $this->terbilang($angka / 10) . ' puluh' . $this->terbilang($angka % 10);
+        } else if ($angka < 200) {
+            $temp = ' seratus' . $this->terbilang($angka - 100);
+        } else if ($angka < 1000) {
+            $temp = $this->terbilang($angka / 100) . ' ratus' . $this->terbilang($angka % 100);
+        } else if ($angka < 2000) {
+            $temp = ' seribu' . $this->terbilang($angka - 1000);
+        } else if ($angka < 1000000) {
+            $temp = $this->terbilang($angka / 1000) . ' ribu' . $this->terbilang($angka % 1000);
+        } else if ($angka < 1000000000) {
+            $temp = $this->terbilang($angka / 1000000) . ' juta' . $this->terbilang($angka % 1000000);
+        } else if ($angka < 1000000000000) {
+            $temp = $this->terbilang($angka / 1000000000) . ' milyar' . $this->terbilang(fmod($angka, 1000000000));
+        } else if ($angka < 1000000000000000) {
+            $temp = $this->terbilang($angka / 1000000000000) . ' triliun' . $this->terbilang(fmod($angka, 1000000000000));
+        }
+        return $temp;
+    }
+
+    /**
+     * Menghasilkan kode transaksi baru.
+     */
+    private function generateKodeTransaksi()
+    {
+        $last = DB::table('transaksi')
             ->orderBy('id', 'desc')
             ->first();
 
-        $lastNumber = $last ? $last->id + 1 : 1;
-
-        // Format nomor urut 4 digit
-        $formattedNumber = str_pad($lastNumber, 4, '0', STR_PAD_LEFT);
-
-        // Gabungkan semua bagian
-        $kode = 'KR-' . $now . '-' . $random . '-' . $formattedNumber;
-
-        return $kode;
-    }
-
-    public function getKodeKeranjang()
-    {
-        // Ambil data keranjang pertama dengan status 1 dan user_id pengguna yang sedang login
-        $keranjang = Keranjang::where('status', 1)
-            ->where('oleh', Auth::user()->id)
-            ->first();
-
-        // Cek apakah keranjang ditemukan
-        if ($keranjang) {
-            // Ambil kode keranjang
-            $kodeKeranjang = $keranjang->kodekeranjang;
-
-            // Kembalikan response JSON dengan kode keranjang dan produk ID
-            return response()->json(['success' => true, 'kode' => $kodeKeranjang]);
-        } else {
-            // Jika keranjang tidak ditemukan
-            return response()->json([
-                'success' => false,
-                'message' => 'Belum ada barang dalam keranjang'
-            ]);
+        $lastNumber = 0;
+        if ($last) {
+            $lastKode = $last->kodetransaksi;
+            $lastNumber = (int) substr($lastKode, -4);
         }
-    }
 
-    public function getKeranjang()
-    {
-        $keranjang = Keranjang::where('status', 1)
-            ->where('oleh', Auth::user()->id)
-            ->with(['produk', 'user'])
-            ->get();
+        $newNumber = $lastNumber + 1;
+        $formattedNumber = str_pad($newNumber, 4, '0', STR_PAD_LEFT);
 
-        $count = $keranjang->count();
+        $now = Carbon::now()->format('YmdHis');
+        $random = rand(100, 999);
 
-        $totalKeranjang = Keranjang::where('status', 1)
-            ->where('oleh', Auth::id())
-            ->sum('total');
-
-        return response()->json(['success' => true, 'message' => 'Data Keranjang Berhasil Ditemukan', 'Data' => $keranjang, 'TotalKeranjang' => $count, 'TotalHargaKeranjang' => $totalKeranjang]);
+        return 'TRX-' . $now . '-' . $random . '-' . $formattedNumber;
     }
 }

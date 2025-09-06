@@ -123,11 +123,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('suplier/deleteSuplier/{id}', [SuplierController::class, 'deleteSuplier']);
 
     Route::get('pos/getKeranjang', [KeranjangController::class, 'getKeranjang']);
-    Route::get('pos/getKodeKeranjang', [KeranjangController::class, 'getKodeKeranjang']);
-    // Route::get('transaksi/getKodeTransaksi', [TransaksiController::class, 'getKodeTransaksi']);
-    Route::post('keranjang/addToCart', [KeranjangController::class, 'addToCart']);
-    Route::delete('keranjang/deleteKeranjangAll', [KeranjangController::class, 'deleteKeranjangAll']);
-    Route::delete('keranjang/deleteKeranjangByID/{id}', [KeranjangController::class, 'deleteKeranjangByID']);
+    Route::get('pos/getKodeTransaksi', [KeranjangController::class, 'getKodeTransaksi']);
+    Route::post('pos/addToCart', [KeranjangController::class, 'addToCart']);
+    Route::delete('pos/clearAllKeranjang', [KeranjangController::class, 'clearAllKeranjangApi']);
+    Route::delete('pos/deleteKeranjangByID/{id}', [KeranjangController::class, 'deleteKeranjangApi']);
 });
 
 

@@ -13,7 +13,7 @@ class Keranjang extends Model
     protected $table    = 'keranjang';
     protected $fillable =
     [
-        'kodekeranjang',
+        'kodetransaksi',
         'produk_id',
         'harga_jual',
         'berat',
@@ -25,6 +25,16 @@ class Keranjang extends Model
         'oleh',
         'status'
     ];
+
+    /**
+     * Get the transaksi that owns the Keranjang
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function transaksi(): BelongsTo
+    {
+        return $this->belongsTo(Transaksi::class, 'kodetransaksi', 'kodetransaksi');
+    }
 
     /**
      * Get the produk that owns the Keranjang

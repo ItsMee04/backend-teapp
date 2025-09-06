@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('keranjang', function (Blueprint $table) {
             $table->id();
-            $table->string('kodekeranjang', 100)->index();
+            $table->string('kodetransaksi', 100);
             $table->unsignedBigInteger('produk_id');
             $table->integer('harga_jual')->default(0);
             $table->decimal('berat', 8, 3)->default(0.000);
@@ -26,6 +26,7 @@ return new class extends Migration
             $table->integer('status');
             $table->timestamps();
 
+            $table->foreign('kodetransaksi')->references('kodetransaksi')->on('transaksi')->onDelete('cascade');
             $table->foreign('produk_id')->references('id')->on('produk')->onDelete('cascade');
             $table->foreign('oleh')->references('id')->on('users')->onDelete('cascade');
         });
