@@ -107,6 +107,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('nampanproduk/pindahProdukNampan', [NampanProdukController::class, 'pindahProduk']);
     Route::get('/produk/{id}/get-signed-url', [CetakBarcodeProduk::class, 'getSignedPrintUrl']);
     Route::get('/nampanProduk/getKategoriByJenis', [NampanProdukController::class, 'getKategoriByJenis']);
+    Route::get('/nampanProduk/getProdukToStoreNampan/{id}',[NampanProdukController::class, 'getProdukToStoreNampan']);
 
     //API PELANGGAN
     Route::get('pelanggan/getPelanggan', [PelangganController::class, 'getPelanggan']);

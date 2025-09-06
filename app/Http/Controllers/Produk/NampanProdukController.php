@@ -43,6 +43,13 @@ class NampanProdukController extends Controller
         ]);
     }
 
+    public function getProdukToStoreNampan($id)
+    {
+        $produk = Produk::with(['jenisproduk'])->where('jenisproduk_id',$id)->get();
+
+        return response()->json(['success'=>true, 'message'=>'Data Produk Berhasil Ditemukan', 'Data'=>$produk]);
+    }
+
     public function getProdukByJenis($id)
     {
         // Cari semua produk dengan jenisproduk_id yang sesuai
