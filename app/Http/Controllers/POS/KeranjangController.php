@@ -74,10 +74,11 @@ class KeranjangController extends Controller
                 ]);
             }
 
+            $newKode = $this->generateKodeTransaksi();
             // Jika tidak ada transaksi aktif
             return response()->json([
                 'success' => true,
-                'kode' => null,
+                'kode' => $newKode,
                 'message' => 'Tidak ada transaksi aktif.'
             ]);
         } catch (\Exception $e) {

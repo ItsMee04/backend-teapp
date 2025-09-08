@@ -13,6 +13,7 @@ use App\Http\Controllers\Produk\JenisProdukController;
 use App\Http\Controllers\Authentication\AuthController;
 use App\Http\Controllers\Pelanggan\PelangganController;
 use App\Http\Controllers\Produk\NampanProdukController;
+use App\Http\Controllers\Transaksi\TransaksiController;
 use App\Http\Controllers\UserManagement\RoleController;
 use App\Http\Controllers\UserManagement\UserController;
 use App\Http\Controllers\UserManagement\JabatanController;
@@ -123,11 +124,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('suplier/updateSuplier/{id}', [SuplierController::class, 'updateSuplier']);
     Route::delete('suplier/deleteSuplier/{id}', [SuplierController::class, 'deleteSuplier']);
 
+    //API KERANJANG & TRANSAKSI
     Route::get('pos/getKeranjang', [KeranjangController::class, 'getKeranjang']);
     Route::get('pos/getKodeTransaksi', [KeranjangController::class, 'getKodeTransaksi']);
     Route::post('pos/addToCart', [KeranjangController::class, 'addToCart']);
     Route::delete('pos/clearAllKeranjang', [KeranjangController::class, 'clearAllKeranjangApi']);
     Route::delete('pos/deleteKeranjangByID/{id}', [KeranjangController::class, 'deleteKeranjangApi']);
+    Route::post('pos/payment',[TransaksiController::class, 'payment']);
+    Route::post('pos/konfirmasiPayment', [TransaksiController::class, 'konfirmasiPembayaran']);
+
 });
 
 
