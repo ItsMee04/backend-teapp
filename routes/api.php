@@ -133,6 +133,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('pos/payment',[TransaksiController::class, 'payment']);
     Route::post('pos/konfirmasiPayment', [TransaksiController::class, 'konfirmasiPembayaran']);
 
+    //API TRANSAKSI PENJUALAN
+    Route::get('transaksi/getTransaksi', [TransaksiController::class, 'getTransaksi']);
+
 });
 
 

@@ -146,4 +146,16 @@ class TransaksiController extends Controller
             return response()->json(['success' => false, 'message' => 'Transaksi tidak ditemukan'], 404);
         }
     }
+
+    public function getTransaksi()
+    {
+        $transaksi = Transaksi::with('pelanggan', 'diskon','keranjang','keranjang.produk','keranjang.user','user','user.pegawai')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data Transaksi Berhasil Ditemukan',
+            'Data'    => $transaksi
+        ]);
+    }
 }
