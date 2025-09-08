@@ -136,6 +136,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     //API TRANSAKSI PENJUALAN
     Route::get('transaksi/getTransaksi', [TransaksiController::class, 'getTransaksi']);
 
+    //API PEMBELIAN DARI TOKO
+    Route::get('transaksi/getTransaksiByKode/{id}', [TransaksiController::class, 'getTransaksiByKode']);
 });
 
 

@@ -149,13 +149,41 @@ class TransaksiController extends Controller
 
     public function getTransaksi()
     {
-        $transaksi = Transaksi::with('pelanggan', 'diskon','keranjang','keranjang.produk','keranjang.user','user','user.pegawai')
+        $transaksi = Transaksi::with('pelanggan', 'diskon', 'keranjang', 'keranjang.produk', 'keranjang.user', 'user', 'user.pegawai')
             ->get();
 
         return response()->json([
             'success' => true,
             'message' => 'Data Transaksi Berhasil Ditemukan',
             'Data'    => $transaksi
+        ]);
+    }
+
+    public function getTransaksiByKode($id)
+    {
+        $transaksi = Transaksi::with([
+            'pelanggan',
+            'diskon',
+            'keranjang',
+            'keranjang.produk',
+            'keranjang.user',
+            'user',
+            'user.pegawai'
+        ])
+            ->where('kodetransaksi', $id)
+            ->first();
+
+        if (!$transaksi) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data Transaksi tidak ditemukan',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data Transaksi Berhasil Ditemukan',
+            'data'    => $transaksi
         ]);
     }
 }

@@ -1,0 +1,54 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class KeranjangPembelian extends Model
+{
+    use HasFactory;
+    protected $table = 'keranjang_pembelian';
+    protected $primaryKey = 'id';
+
+    protected $fillable = [
+        'kodepembelian',
+        'produk_id',
+        'harga_beli',
+        'berat',
+        'karat',
+        'lingkar',
+        'panjang',
+        'kondisi_id',
+        'jenis_pembelian',
+        'total',
+        'terbilang',
+        'keterangan',
+        'oleh',
+        'status',
+    ];
+
+    // Relasi ke pembelian
+    public function pembelian()
+    {
+        return $this->belongsTo(Pembelian::class, 'kodepembelian', 'kodepembelian');
+    }
+
+    // Relasi ke produk
+    public function produk()
+    {
+        return $this->belongsTo(Produk::class, 'produk_id');
+    }
+
+    // Relasi ke kondisi
+    public function kondisi()
+    {
+        return $this->belongsTo(Kondisi::class, 'kondisi_id');
+    }
+
+    // Relasi ke user
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'oleh');
+    }
+}
