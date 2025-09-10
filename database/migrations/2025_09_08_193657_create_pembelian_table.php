@@ -16,9 +16,9 @@ return new class extends Migration
             $table->string('kodepembelian', 100)->unique(); // kode transaksi pembelian utama
             $table->unsignedBigInteger('suplier_id')->nullable();   // jika dari suplier
             $table->unsignedBigInteger('pelanggan_id')->nullable(); // jika dari pelanggan
-            $table->date('tanggal');
+            $table->date('tanggal')->nullable();
             $table->integer('total')->default(0);
-            $table->string('terbilang');
+            $table->string('terbilang')->nullable();
             $table->unsignedBigInteger('oleh'); // user yang menginput
             $table->text('catatan')->nullable(); // opsional
             $table->enum('jenispembelian', ['daritoko', 'luartoko']);

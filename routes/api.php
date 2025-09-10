@@ -18,6 +18,7 @@ use App\Http\Controllers\UserManagement\RoleController;
 use App\Http\Controllers\UserManagement\UserController;
 use App\Http\Controllers\UserManagement\JabatanController;
 use App\Http\Controllers\UserManagement\PegawaiController;
+use App\Http\Controllers\Transaksi\PembelianTokoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -138,6 +139,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     //API PEMBELIAN DARI TOKO
     Route::get('transaksi/getTransaksiByKode/{id}', [TransaksiController::class, 'getTransaksiByKode']);
+    Route::get('pembelianToko/getPembelianProduk', [PembelianTokoController::class, 'getPembelianProduk']);
+    Route::post('pembelianToko/pilihProduk', [PembelianTokoController::class, 'pilihProduk']);
 });
 
 
