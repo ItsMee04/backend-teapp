@@ -141,6 +141,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('transaksi/getTransaksiByKode/{id}', [TransaksiController::class, 'getTransaksiByKode']);
     Route::get('pembelianToko/getPembelianProduk', [PembelianTokoController::class, 'getPembelianProduk']);
     Route::post('pembelianToko/pilihProduk', [PembelianTokoController::class, 'pilihProduk']);
+    Route::delete('pembelianToko/deleteProduk', [PembelianTokoController::class, 'deleteProduk']);
 });
 
 

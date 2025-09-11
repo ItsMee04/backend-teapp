@@ -164,4 +164,28 @@ class PembelianTokoController extends Controller
             'data' => $keranjang
         ]);
     }
+
+    public function deleteProduk($id)
+    {
+        $keranjangItem = KeranjangPembelian::where('id', $id)
+            ->where('oleh', Auth::user()->id)
+            ->where('status', 1)
+            ->first();
+
+        if (!$keranjangItem) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item keranjang tidak ditemukan atau sudah diproses.'
+            ], 404);
+        }
+
+        // ubah status jadi 0, bukan delete
+        $keranjangItem->status = 0;
+        $keranjangItem->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Item keranjang berhasil dikeluarkan.'
+        ]);
+    }
 }
