@@ -80,6 +80,34 @@ class PembelianTokoController extends Controller
         }
     }
 
+    private function terbilang($angka)
+    {
+        $angka = abs($angka);
+        $huruf = ["", "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan", "sepuluh", "sebelas"];
+
+        if ($angka < 12) {
+            return $huruf[$angka];
+        } elseif ($angka < 20) {
+            return $this->terbilang($angka - 10) . " belas";
+        } elseif ($angka < 100) {
+            return $this->terbilang(floor($angka / 10)) . " puluh " . $this->terbilang($angka % 10);
+        } elseif ($angka < 200) {
+            return "seratus " . $this->terbilang($angka - 100);
+        } elseif ($angka < 1000) {
+            return $this->terbilang(floor($angka / 100)) . " ratus " . $this->terbilang($angka % 100);
+        } elseif ($angka < 2000) {
+            return "seribu " . $this->terbilang($angka - 1000);
+        } elseif ($angka < 1000000) {
+            return $this->terbilang(floor($angka / 1000)) . " ribu " . $this->terbilang($angka % 1000);
+        } elseif ($angka < 1000000000) {
+            return $this->terbilang(floor($angka / 1000000)) . " juta " . $this->terbilang($angka % 1000000);
+        } elseif ($angka < 1000000000000) {
+            return $this->terbilang(floor($angka / 1000000000)) . " miliar " . $this->terbilang($angka % 1000000000);
+        } else {
+            return "angka terlalu besar";
+        }
+    }
+
     /**
      * Menambahkan produk ke keranjang belanja.
      *
@@ -111,9 +139,10 @@ class PembelianTokoController extends Controller
             // Masukkan hanya kode transaksi ke tabel transaksi
             Pembelian::create([
                 'kodepembelian' => $kodePembelian,
+                'pelanggan_id'  => $request->pelanggan_id,
                 'tanggal'       => Carbon::now(),
-                'oleh' => Auth::user()->id,
-                'status' => 1, // Status 1 menandakan transaksi sedang aktif
+                'oleh'          => Auth::user()->id,
+                'status'        => 1, // Status 1 menandakan transaksi sedang aktif
             ]);
         } else {
             // Jika ada transaksi aktif, gunakan kode yang sudah ada
@@ -165,6 +194,54 @@ class PembelianTokoController extends Controller
         ]);
     }
 
+    public function updatehargaPembelianProduk(Request $request, $id)
+    {
+        $produk = KeranjangPembelian::findOrFail($id);
+
+        $messages = [
+            'required' => ':attribute wajib di isi !!!',
+            'integer'  => ':attribute format wajib menggunakan angka',
+        ];
+
+        $credentials = $request->validate([
+            'hargabeli' => 'required|integer',
+            'kondisi'   => 'required|integer'
+        ], $messages);
+
+        // Hitung subtotalharga baru (harga_beli * berat produk yang ada di pembelian_produk)
+        $subtotalHargaBaru = $request->hargabeli * $request->berat;
+
+        // Update data pembelian produk sekaligus subtotalharga
+        $produk->update([
+            'harga_beli'     => $request->hargabeli,
+            'kondisi_id'     => $request->kondisi,
+            'berat'          => $request->berat,
+            'subtotalharga'  => $subtotalHargaBaru,
+        ]);
+
+        // Ambil ID produk master dari kodeproduk
+        $produkMaster = Produk::where('kodeproduk', $produk->kodeproduk)->first();
+
+        // // Jika ditemukan, update juga perbaikannya
+        // if ($produkMaster) {
+        //     if (in_array($request->kondisi, [2, 3])) {
+        //         // Jika kondisi rusak atau kusam, update kondisi di perbaikan
+        //         Perbaikan::where('produk_id', $produkMaster->id)->update([
+        //             'kondisi_id' => $request->kondisi,
+        //             'status'     => 1
+        //         ]);
+        //     } elseif ($request->kondisi == 1) {
+        //         // Jika kondisi bagus, update status perbaikan menjadi selesai
+        //         Perbaikan::where('produk_id', $produkMaster->id)->update([
+        //             'kondisi_id' => 1,
+        //             'status'     => 0
+        //         ]);
+        //     }
+        // }
+
+        return response()->json(['success' => true, 'message' => 'Data Produk Berhasil Disimpan']);
+    }
+
     public function deleteProduk($id)
     {
         $keranjangItem = KeranjangPembelian::where('id', $id)
@@ -181,7 +258,7 @@ class PembelianTokoController extends Controller
 
         // ubah status jadi 0, bukan delete
         $keranjangItem->status = 0;
-        $keranjangItem->save();
+        $keranjangItem->update();
 
         return response()->json([
             'success' => true,

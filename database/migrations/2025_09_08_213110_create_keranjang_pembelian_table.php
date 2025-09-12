@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('kodepembelian', 100); // relasi ke pembelian (kode, bukan id)
             $table->unsignedBigInteger('produk_id')->nullable(); // bisa null kalau produk luar toko
             $table->unsignedBigInteger('harga_beli')->default(0);
-            $table->unsignedBigInteger('berat')->nullable();
+            $table->decimal('berat', 8, 3)->nullable()->default(0.000);
             $table->unsignedBigInteger('karat')->nullable();
             $table->unsignedBigInteger('lingkar')->nullable();
             $table->unsignedBigInteger('panjang')->nullable();
