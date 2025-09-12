@@ -140,7 +140,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     //API PEMBELIAN DARI TOKO
     Route::get('transaksi/getTransaksiByKode/{id}', [TransaksiController::class, 'getTransaksiByKode']);
     Route::get('pembelianToko/getPembelianProduk', [PembelianTokoController::class, 'getPembelianProduk']);
+    Route::get('pembelianToko/getKodePembelianAktif', [PembelianTokoController::class, 'getKodePembelianAktif']);
     Route::post('pembelianToko/pilihProduk', [PembelianTokoController::class, 'pilihProduk']);
+    Route::put('/pembelianToko/updateProduk/{id}', [PembelianTokoController::class, 'updatehargaPembelianProduk']);
     Route::delete('pembelianToko/deleteProduk/{id}', [PembelianTokoController::class, 'deleteProduk']);
 });
 

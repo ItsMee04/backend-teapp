@@ -108,6 +108,31 @@ class PembelianTokoController extends Controller
         }
     }
 
+    public function getKodePembelianAktif()
+    {
+        $userId = Auth::id();
+
+        $activePembelian = Pembelian::where('oleh', $userId)
+            ->where('status', 1)
+            ->first();
+
+        if ($activePembelian) {
+            return response()->json([
+                'success' => true,
+                'Data' => [
+                    'kodepembelian' => $activePembelian->kodepembelian,
+                    'pelanggan_id' => $activePembelian->pelanggan_id,
+                    'pelanggan_nama' => $activePembelian->pelanggan->nama ?? null
+                ]
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Tidak ada transaksi aktif'
+        ]);
+    }
+
     /**
      * Menambahkan produk ke keranjang belanja.
      *
@@ -127,6 +152,7 @@ class PembelianTokoController extends Controller
 
         // 1. Cari transaksi yang sedang aktif (status = 1) untuk user ini
         $activePembelian = Pembelian::where('oleh', Auth::user()->id)
+            ->where('pelanggan_id', $request->pelanggan_id)
             ->where('status', 1)
             ->first();
 
@@ -205,39 +231,23 @@ class PembelianTokoController extends Controller
 
         $credentials = $request->validate([
             'hargabeli' => 'required|integer',
-            'kondisi'   => 'required|integer'
+            'kondisi'   => 'required|integer',
+            'berat'     => 'required|numeric|min:0.01', // ✅ wajib angka desimal positif
         ], $messages);
 
         // Hitung subtotalharga baru (harga_beli * berat produk yang ada di pembelian_produk)
         $subtotalHargaBaru = $request->hargabeli * $request->berat;
+        $angka = abs($subtotalHargaBaru);
+        $terbilang = ucwords(trim($this->terbilang($angka))) . ' Rupiah';
 
         // Update data pembelian produk sekaligus subtotalharga
         $produk->update([
             'harga_beli'     => $request->hargabeli,
             'kondisi_id'     => $request->kondisi,
             'berat'          => $request->berat,
-            'subtotalharga'  => $subtotalHargaBaru,
+            'total'          => $subtotalHargaBaru,
+            'terbilang'      => $terbilang,
         ]);
-
-        // Ambil ID produk master dari kodeproduk
-        $produkMaster = Produk::where('kodeproduk', $produk->kodeproduk)->first();
-
-        // // Jika ditemukan, update juga perbaikannya
-        // if ($produkMaster) {
-        //     if (in_array($request->kondisi, [2, 3])) {
-        //         // Jika kondisi rusak atau kusam, update kondisi di perbaikan
-        //         Perbaikan::where('produk_id', $produkMaster->id)->update([
-        //             'kondisi_id' => $request->kondisi,
-        //             'status'     => 1
-        //         ]);
-        //     } elseif ($request->kondisi == 1) {
-        //         // Jika kondisi bagus, update status perbaikan menjadi selesai
-        //         Perbaikan::where('produk_id', $produkMaster->id)->update([
-        //             'kondisi_id' => 1,
-        //             'status'     => 0
-        //         ]);
-        //     }
-        // }
 
         return response()->json(['success' => true, 'message' => 'Data Produk Berhasil Disimpan']);
     }
@@ -259,6 +269,17 @@ class PembelianTokoController extends Controller
         // ubah status jadi 0, bukan delete
         $keranjangItem->status = 0;
         $keranjangItem->update();
+
+        // --- CEK SISA PRODUK AKTIF DI TRANSAKSI ---
+        $activeItems = KeranjangPembelian::where('kodepembelian', $keranjangItem->kodepembelian)
+            ->where('status', 1)
+            ->count();
+
+        // Kalau sudah tidak ada produk aktif, nonaktifkan transaksi
+        if ($activeItems == 0) {
+            Pembelian::where('kodepembelian', $keranjangItem->kodepembelian)
+                ->update(['status' => 0]);
+        }
 
         return response()->json([
             'success' => true,
