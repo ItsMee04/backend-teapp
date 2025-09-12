@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Transaksi;
 use Carbon\Carbon;
 use App\Models\Produk;
 use App\Models\Pembelian;
+use App\Models\Perbaikan;
 use Illuminate\Http\Request;
 use App\Models\KeranjangPembelian;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Transaksi\PerbaikanController;
 
 class PembelianTokoController extends Controller
 {
@@ -284,6 +286,74 @@ class PembelianTokoController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Item keranjang berhasil dikeluarkan.'
+        ]);
+    }
+
+    public function storePembelian(Request $request)
+    {
+        $request->validate([
+            'kodepembelian' => 'required|string',
+            'catatan'       => 'nullable|string',
+        ]);
+
+        $kodepembelian = $request->kodepembelian;
+
+        // Ambil semua produk di keranjang yang aktif
+        $keranjang = KeranjangPembelian::where('kodepembelian', $kodepembelian)
+            ->where('status', 1)
+            ->get();
+
+        if ($keranjang->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada produk di keranjang'
+            ]);
+        }
+
+        $totalHarga = $keranjang->sum('total'); // pakai kolom total langsung
+
+        $angka = abs($totalHarga);
+        $terbilang = ucwords(trim($this->terbilang($angka))) . ' Rupiah';
+
+        $pembelian = Pembelian::where('kodepembelian', $kodepembelian)
+            ->where('status', 1)
+            ->update([
+                "total" => $totalHarga,
+                "terbilang" => $terbilang,
+                "catatan" => $request->catatan,
+                "status" => 2, // status 2 artinya sudah selesai / tidak aktif
+            ]);
+
+        // Ambil data pembelian yang baru diupdate
+        $pembelian = Pembelian::where('kodepembelian', $kodepembelian)
+            ->where('status', 2)
+            ->first();
+
+        // Update semua keranjang jadi status 2
+        KeranjangPembelian::where('kodepembelian', $kodepembelian)
+            ->where('status', 1)
+            ->update(['status' => 2]);
+
+        $kodeperbaikan = (new PerbaikanController)->kodePerbaikan();
+        // Insert ke perbaikan jika kondisi_id 2 atau 3
+        foreach ($keranjang as $item) {
+            if (in_array($item->kondisi_id, [2, 3])) {
+                Perbaikan::create([
+                    'kodeperbaikan' => $kodeperbaikan,
+                    'produk_id'     => $item->produk_id,
+                    'kondisi_id'    => $item->kondisi_id,
+                    'tanggalmasuk'  => Carbon::now(),
+                    'status'        => 1, // bisa disesuaikan
+                    'oleh'          => Auth::id(),
+                    'keterangan'    => 'Produk masuk perbaikan', // opsional
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pembelian berhasil disimpan',
+            'data' => $pembelian
         ]);
     }
 }

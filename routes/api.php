@@ -144,6 +144,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('pembelianToko/pilihProduk', [PembelianTokoController::class, 'pilihProduk']);
     Route::put('/pembelianToko/updateProduk/{id}', [PembelianTokoController::class, 'updatehargaPembelianProduk']);
     Route::delete('pembelianToko/deleteProduk/{id}', [PembelianTokoController::class, 'deleteProduk']);
+    Route::post('pembelianToko/storePembelian', [PembelianTokoController::class, 'storePembelian']);
 });
 
 
