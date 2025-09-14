@@ -164,7 +164,6 @@ class PembelianTokoController extends Controller
         if (!$activePembelian) {
             $kodePembelian = $this->generateKodePembelian();
 
-            // Masukkan hanya kode transaksi ke tabel transaksi
             Pembelian::create([
                 'kodepembelian' => $kodePembelian,
                 'pelanggan_id'  => $request->pelanggan_id,
@@ -173,37 +172,37 @@ class PembelianTokoController extends Controller
                 'status'        => 1, // Status 1 menandakan transaksi sedang aktif
             ]);
         } else {
-            // Jika ada transaksi aktif, gunakan kode yang sudah ada
             $kodePembelian = $activePembelian->kodepembelian;
         }
 
-        // Ambil data produk dari database berdasarkan ID yang dikirim
-        $produk = Produk::where('id', $request->id)->first();
-        if (!$produk) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Produk tidak ditemukan.'
-            ], 404);
-        }
-
-        // Cek apakah produk sudah ada di keranjang transaksi yang aktif
-        $existingProductInCart = KeranjangPembelian::where('kodepembelian', $kodePembelian)
-            ->where('produk_id', $request->id)
-            ->where('status', 1)
+        // 🔹 Validasi produk di keranjang
+        $existingProductInCart = KeranjangPembelian::where('produk_id', $request->id)
+            ->where('kodetransaksi', $request->kodetransaksi) // cek transaksi asal
+            ->orderByDesc('id')
             ->first();
 
         if ($existingProductInCart) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Produk ini sudah ada di keranjang'
-            ]);
+            if ($existingProductInCart->status == 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Produk ini sudah ada di keranjang aktif untuk transaksi ini.'
+                ]);
+            }
+
+            if ($existingProductInCart->status == 2) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Produk ini sudah masuk transaksi pembelian untuk transaksi ini dan tidak bisa dipilih lagi.'
+                ]);
+            }
         }
+
 
         // Siapkan data untuk dimasukkan ke tabel keranjang
         $dataKeranjang = [
+            'kodetransaksi' => $request->kodetransaksi, // simpan transaksi asal
             'kodepembelian' => $kodePembelian,
             'produk_id' => $request->id,
-            'harga_jual' => $produk->harga_jual,
             'berat' => $produk->berat,
             'karat' => $produk->karat,
             'lingkar' => $produk->lingkar,
@@ -212,7 +211,6 @@ class PembelianTokoController extends Controller
             'status' => 1, // Status 1 menandakan item ini berada di keranjang aktif
         ];
 
-        // Simpan data ke database
         $keranjang = KeranjangPembelian::create($dataKeranjang);
 
         return response()->json([
@@ -221,6 +219,7 @@ class PembelianTokoController extends Controller
             'data' => $keranjang
         ]);
     }
+
 
     public function updatehargaPembelianProduk(Request $request, $id)
     {
@@ -355,5 +354,48 @@ class PembelianTokoController extends Controller
             'message' => 'Pembelian berhasil disimpan',
             'data' => $pembelian
         ]);
+    }
+
+    public function batalPembelian(Request $request)
+    {
+        $request->validate([
+            'kodepembelian' => 'required|string',
+        ]);
+
+        $kodepembelian = $request->kodepembelian;
+
+        // Cek apakah masih ada produk aktif di keranjang
+        $keranjang = KeranjangPembelian::where('kodepembelian', $kodepembelian)
+            ->where('status', 1)
+            ->get();
+
+        if ($keranjang->isNotEmpty()) {
+            // Kalau masih ada produk, nonaktifkan semua
+            KeranjangPembelian::where('kodepembelian', $kodepembelian)
+                ->where('status', 1)
+                ->update(['status' => 0]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Produk di keranjang berhasil dibatalkan'
+            ]);
+        } else {
+            // Kalau sudah kosong, nonaktifkan transaksi pembelian
+            $updated = Pembelian::where('kodepembelian', $kodepembelian)
+                ->where('status', 1)
+                ->update(['status' => 0]);
+
+            if ($updated) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Transaksi pembelian berhasil dibatalkan'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Transaksi tidak ditemukan atau sudah dibatalkan'
+                ], 404);
+            }
+        }
     }
 }

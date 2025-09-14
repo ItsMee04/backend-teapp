@@ -12,6 +12,7 @@ class KeranjangPembelian extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = [
+        'kodetransaksi',
         'kodepembelian',
         'produk_id',
         'harga_beli',

@@ -172,6 +172,7 @@ class TransaksiController extends Controller
             'user.pegawai'
         ])
             ->where('kodetransaksi', $id)
+            ->where('status', 2) // Hanya ambil transaksi dengan status 2 (selesai)
             ->first();
 
         if (!$transaksi) {
