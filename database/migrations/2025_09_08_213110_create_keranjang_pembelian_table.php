@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('keranjang_pembelian', function (Blueprint $table) {
             $table->id();
-            $table->string('kodetransaksi', 100); // relasi ke pembelian (kode, bukan id)
+            $table->string('kodetransaksi', 100)->nullable(); // relasi ke pembelian (kode, bukan id)
             $table->string('kodepembelian', 100); // relasi ke pembelian (kode, bukan id)
             $table->unsignedBigInteger('produk_id')->nullable(); // bisa null kalau produk luar toko
             $table->unsignedBigInteger('harga_beli')->default(0);
