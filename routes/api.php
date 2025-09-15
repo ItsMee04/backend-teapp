@@ -13,6 +13,7 @@ use App\Http\Controllers\Produk\JenisProdukController;
 use App\Http\Controllers\Authentication\AuthController;
 use App\Http\Controllers\Pelanggan\PelangganController;
 use App\Http\Controllers\Produk\NampanProdukController;
+use App\Http\Controllers\Transaksi\PembelianLuarTokoController;
 use App\Http\Controllers\Transaksi\TransaksiController;
 use App\Http\Controllers\UserManagement\RoleController;
 use App\Http\Controllers\UserManagement\UserController;
@@ -146,6 +147,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('pembelianToko/deleteProduk/{id}', [PembelianTokoController::class, 'deleteProduk']);
     Route::post('pembelianToko/storePembelian', [PembelianTokoController::class, 'storePembelian']);
     Route::post('pembelianToko/cancelPembelian', [PembelianTokoController::class, 'batalPembelian']);
+
+    //API PEMBELIAN LUAR TOKO
+    Route::get('pembelianLuarToko/getPembelianProduk', [PembelianLuarTokoController::class, 'getPembelianProduk']);
 });
 
 
