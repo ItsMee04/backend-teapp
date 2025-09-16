@@ -150,6 +150,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     //API PEMBELIAN LUAR TOKO
     Route::get('pembelianLuarToko/getPembelianProduk', [PembelianLuarTokoController::class, 'getPembelianProduk']);
+    Route::post('pembelianLuarToko/storePembelianProduk', [PembelianLuarTokoController::class, 'storeProduk']);
 });
 
 

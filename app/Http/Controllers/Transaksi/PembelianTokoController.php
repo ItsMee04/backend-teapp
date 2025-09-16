@@ -29,7 +29,7 @@ class PembelianTokoController extends Controller
     /**
      * Menghasilkan kode pembelian baru.
      */
-    private function generateKodePembelian()
+    public function generateKodePembelian()
     {
         $last = DB::table('pembelian')
             ->orderBy('id', 'desc')
