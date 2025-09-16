@@ -114,8 +114,9 @@ class PembelianTokoController extends Controller
     {
         $userId = Auth::id();
 
-        $activePembelian = Pembelian::where('oleh', $userId)
+        $activePembelian = KeranjangPembelian::where('oleh', $userId)
             ->where('status', 1)
+            ->where('jenis_pembelian', 'daritoko')
             ->first();
 
         if ($activePembelian) {
