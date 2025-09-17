@@ -13,6 +13,7 @@ use App\Http\Controllers\Produk\JenisProdukController;
 use App\Http\Controllers\Authentication\AuthController;
 use App\Http\Controllers\Pelanggan\PelangganController;
 use App\Http\Controllers\Produk\NampanProdukController;
+use App\Http\Controllers\Transaksi\PembelianController;
 use App\Http\Controllers\Transaksi\PembelianLuarTokoController;
 use App\Http\Controllers\Transaksi\TransaksiController;
 use App\Http\Controllers\UserManagement\RoleController;
@@ -135,9 +136,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('pos/payment',[TransaksiController::class, 'payment']);
     Route::post('pos/konfirmasiPayment', [TransaksiController::class, 'konfirmasiPembayaran']);
 
-    //API TRANSAKSI PENJUALAN
-    Route::get('transaksi/getTransaksi', [TransaksiController::class, 'getTransaksi']);
-
     //API PEMBELIAN DARI TOKO
     Route::get('transaksi/getTransaksiByKode/{id}', [TransaksiController::class, 'getTransaksiByKode']);
     Route::get('pembelianToko/getPembelianProduk', [PembelianTokoController::class, 'getPembelianProduk']);
@@ -154,6 +152,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('pembelianLuarToko/updateProduk/{id}', [PembelianLuarTokoController::class, 'updateProduk']);
     Route::delete('pembelianLuarToko/deleteProduk/{id}', [PembelianLuarTokoController::class, 'deleteProduk']);
     Route::post('pembelianLuarToko/storePembelian', [PembelianLuarTokoController::class, 'storePembelian']);
+
+    //API TRANSAKSI PENJUALAN
+    Route::get('transaksi/getTransaksi', [TransaksiController::class, 'getTransaksi']);
+
+    //API TRANSAKSI PEMBELIAN
+    Route::get('pembelian/getPembelian', [PembelianController::class, 'getPembelian']);
+
+
 });
 
 
