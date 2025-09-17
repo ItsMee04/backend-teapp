@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Transaksi;
 
+use Log;
 use Carbon\Carbon;
 use App\Models\Produk;
 use Milon\Barcode\DNS1D;
@@ -353,6 +354,8 @@ class PembelianLuarTokoController extends Controller
         $request->validate([
             'kodepembelian' => 'required|string',
             'catatan'       => 'nullable|string',
+            'pelanggan_id'  => 'nullable|integer',
+            'suplier_id'    => 'nullable|integer',
         ]);
 
         $kodepembelian = $request->kodepembelian;
@@ -370,25 +373,28 @@ class PembelianLuarTokoController extends Controller
         }
 
         $totalHarga = $keranjang->sum('total'); // pakai kolom total langsung
+        $terbilang = ucwords(trim($this->terbilang(abs($totalHarga)))) . ' Rupiah';
 
-        $angka = abs($totalHarga);
-        $terbilang = ucwords(trim($this->terbilang($angka))) . ' Rupiah';
+        // Update pembelian (termasuk pelanggan_id & suplier_id)
+        $updateData = [
+            "total"        => $totalHarga,
+            "terbilang"    => $terbilang,
+            "catatan"      => $request->catatan,
+            "status"       => 2, // sudah selesai
+            "pelanggan_id" => $request->pelanggan_id ?? null,
+            "suplier_id"   => $request->suplier_id ?? null,
+        ];
 
-        $pembelian = Pembelian::where('kodepembelian', $kodepembelian)
+        Pembelian::where('kodepembelian', $kodepembelian)
             ->where('status', 1)
-            ->update([
-                "total" => $totalHarga,
-                "terbilang" => $terbilang,
-                "catatan" => $request->catatan,
-                "status" => 2, // status 2 artinya sudah selesai / tidak aktif
-            ]);
+            ->update($updateData);
 
-        // Ambil data pembelian yang baru diupdate
+        // Ambil data pembelian terbaru
         $pembelian = Pembelian::where('kodepembelian', $kodepembelian)
             ->where('status', 2)
             ->first();
 
-        // Update semua keranjang jadi status 2
+        // Update status keranjang
         KeranjangPembelian::where('kodepembelian', $kodepembelian)
             ->where('status', 1)
             ->update(['status' => 2]);
@@ -396,7 +402,7 @@ class PembelianLuarTokoController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Pembelian berhasil disimpan',
-            'data' => $pembelian
+            'data'    => $pembelian
         ]);
     }
 }

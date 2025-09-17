@@ -153,6 +153,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('pembelianLuarToko/storePembelianProduk', [PembelianLuarTokoController::class, 'storeProduk']);
     Route::put('pembelianLuarToko/updateProduk/{id}', [PembelianLuarTokoController::class, 'updateProduk']);
     Route::delete('pembelianLuarToko/deleteProduk/{id}', [PembelianLuarTokoController::class, 'deleteProduk']);
+    Route::post('pembelianLuarToko/storePembelian', [PembelianLuarTokoController::class, 'storePembelian']);
 });
 
 
