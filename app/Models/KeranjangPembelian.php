@@ -21,6 +21,7 @@ class KeranjangPembelian extends Model
         'lingkar',
         'panjang',
         'kondisi_id',
+        'jenisproduk_id',
         'jenis_pembelian',
         'total',
         'terbilang',
@@ -45,6 +46,12 @@ class KeranjangPembelian extends Model
     public function kondisi()
     {
         return $this->belongsTo(Kondisi::class, 'kondisi_id');
+    }
+
+    // Relasi ke jenis produk
+    public function jenisProduk()
+    {
+        return $this->belongsTo(JenisProduk::class, 'jenisproduk_id');
     }
 
     // Relasi ke user

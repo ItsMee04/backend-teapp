@@ -141,6 +141,7 @@ class PembelianLuarTokoController extends Controller
                 'kodepembelian'     => $kodePembelian,
                 'produk_id'         => $produk->id,
                 'kondisi_id'        => $produk->kondisi_id,
+                'jenisproduk_id'    => $produk->jenisproduk_id,
                 'nama'              => $produk->nama,
                 'harga_beli'        => $produk->harga_beli,
                 'berat'             => $produk->berat,
@@ -179,5 +180,223 @@ class PembelianLuarTokoController extends Controller
                 'pembelian' => $activePembelian,
             ]);
         });
+    }
+
+    public function updateProduk(Request $request, $id)
+    {
+        $request->validate([
+            'jenis'      => 'required|exists:jenis_produk,id',
+            'nama'       => 'required|string',
+            'hargabeli'  => 'required|numeric',
+            'berat'      => 'required|numeric',
+            'karat'      => 'nullable|string',
+            'lingkar'    => 'nullable|string',
+            'panjang'    => 'nullable|string',
+            'keterangan' => 'nullable|string',
+            'kondisi'    => 'required|exists:kondisi,id',
+        ]);
+
+        return DB::transaction(function () use ($request, $id) {
+            // Cari keranjang pembelian
+            $keranjang = KeranjangPembelian::where('id', $id)
+                ->where('status', 1)
+                ->where('oleh', Auth::id())
+                ->where('jenis_pembelian', 2) // luar toko
+                ->first();
+
+            if (!$keranjang) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data keranjang pembelian tidak ditemukan atau sudah tidak aktif'
+                ], 404);
+            }
+
+            // Ambil produk terkait
+            $produk = Produk::find($keranjang->produk_id);
+            if (!$produk) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Produk terkait tidak ditemukan'
+                ], 404);
+            }
+
+            // Simpan kondisi baru dulu ke produk
+            $produk->update([
+                'jenisproduk_id' => $request->jenis,
+                'nama'           => $request->nama,
+                'harga_beli'     => $request->hargabeli,
+                'berat'          => $request->berat,
+                'karat'          => $request->karat,
+                'lingkar'        => $request->lingkar,
+                'panjang'        => $request->panjang,
+                'keterangan'     => $request->keterangan,
+                'kondisi_id'     => $request->kondisi,
+            ]);
+
+            // ----- LOGIKA PERBAIKAN -----
+            // Cek kondisi baru
+            $kondisiBaru = $request->kondisi;
+
+            // Cari record perbaikan dengan produk_id ini yang masih aktif (status = 1)
+            $perbaikan = Perbaikan::where('produk_id', $produk->id)
+                ->where('status', 1)
+                ->first();
+
+            if (in_array($kondisiBaru, [2, 3])) {
+                // kalau kondisi baru 2 atau 3
+                if ($perbaikan) {
+                    // sudah ada perbaikan yg aktif, update tanggalmasuk jika ingin diperbaharui
+                    // misal kalau kondisi berubah dari 2 ke 3 atau tetap 2 tapi ingin reset tanggal masuk
+                    $perbaikan->update([
+                        'tanggalmasuk' => Carbon::now(),
+                        'kondisi_id'    => $kondisiBaru,
+                        'keterangan'    => $request->keterangan ?? $perbaikan->keterangan,
+                        // bisa update field lain kalau perlu
+                    ]);
+                } else {
+                    // belum ada perbaikan yg aktif, buat baru
+                    // misal kode perbaikan otomatis dibuat dengan fungsi tertentu
+                    $kodePerbaikan = $this->generateKodePerbaikan();
+                    Perbaikan::create([
+                        'kodeperbaikan' => $kodePerbaikan,
+                        'produk_id'     => $produk->id,
+                        'tanggalmasuk'  => Carbon::now(),
+                        'kondisi_id'    => $kondisiBaru,
+                        'keterangan'    => $request->keterangan ?? 'Produk dari luar toko kondisi tidak baik',
+                        'status'        => 1, // perbaikan aktif
+                        'oleh'          => Auth::user()->id,
+                    ]);
+                }
+            } else if ($kondisiBaru == 1) {
+                // kondisi jadi baik (1), berarti keluar dari perbaikan
+                if ($perbaikan) {
+                    // ubah status perbaikan menjadi 0 (non aktif)
+                    $perbaikan->update([
+                        'status' => 0
+                    ]);
+                }
+            }
+            // ----- END LOGIKA PERBAIKAN -----
+
+            // Hitung ulang total & terbilang
+            $berat = $request->berat;
+            $harga = $request->hargabeli;
+            $total = $berat * $harga;
+            $terbilang = ucwords($this->terbilang($total)) . ' Rupiah';
+
+            // Update data keranjang pembelian
+            $keranjang->update([
+                'kondisi_id'     => $request->kondisi,
+                'jenisproduk_id' => $request->jenis,
+                'nama'           => $request->nama,
+                'harga_beli'     => $request->hargabeli,
+                'berat'          => $request->berat,
+                'karat'          => $request->karat,
+                'lingkar'        => $request->lingkar,
+                'panjang'        => $request->panjang,
+                'total'          => $total,
+                'terbilang'      => $terbilang,
+                'keterangan'     => $request->keterangan,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data keranjang pembelian berhasil diupdate',
+                'data'    => $keranjang
+            ]);
+        });
+    }
+
+    public function deleteProduk($id)
+    {
+        $keranjangItem = KeranjangPembelian::where('id', $id)
+            ->where('oleh', Auth::user()->id)
+            ->where('status', 1)
+            ->first();
+
+        if (!$keranjangItem) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item keranjang tidak ditemukan atau sudah diproses.'
+            ], 404);
+        }
+
+        // ubah status jadi 0, bukan delete
+        $keranjangItem->status = 0;
+        $keranjangItem->update();
+
+        // --- NONAKTIFKAN PRODUK DI MASTER ---
+        if ($keranjangItem->produk_id) {
+            Produk::where('id', $keranjangItem->produk_id)
+                ->update(['status' => 0]);
+        }
+
+        // --- CEK SISA PRODUK AKTIF DI TRANSAKSI ---
+        $activeItems = KeranjangPembelian::where('kodepembelian', $keranjangItem->kodepembelian)
+            ->where('status', 1)
+            ->count();
+
+        // Kalau sudah tidak ada produk aktif, nonaktifkan transaksi
+        if ($activeItems == 0) {
+            Pembelian::where('kodepembelian', $keranjangItem->kodepembelian)
+                ->update(['status' => 0]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Item keranjang berhasil dikeluarkan.'
+        ]);
+    }
+
+    public function storePembelian(Request $request)
+    {
+        $request->validate([
+            'kodepembelian' => 'required|string',
+            'catatan'       => 'nullable|string',
+        ]);
+
+        $kodepembelian = $request->kodepembelian;
+
+        // Ambil semua produk di keranjang yang aktif
+        $keranjang = KeranjangPembelian::where('kodepembelian', $kodepembelian)
+            ->where('status', 1)
+            ->get();
+
+        if ($keranjang->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada produk di keranjang'
+            ]);
+        }
+
+        $totalHarga = $keranjang->sum('total'); // pakai kolom total langsung
+
+        $angka = abs($totalHarga);
+        $terbilang = ucwords(trim($this->terbilang($angka))) . ' Rupiah';
+
+        $pembelian = Pembelian::where('kodepembelian', $kodepembelian)
+            ->where('status', 1)
+            ->update([
+                "total" => $totalHarga,
+                "terbilang" => $terbilang,
+                "catatan" => $request->catatan,
+                "status" => 2, // status 2 artinya sudah selesai / tidak aktif
+            ]);
+
+        // Ambil data pembelian yang baru diupdate
+        $pembelian = Pembelian::where('kodepembelian', $kodepembelian)
+            ->where('status', 2)
+            ->first();
+
+        // Update semua keranjang jadi status 2
+        KeranjangPembelian::where('kodepembelian', $kodepembelian)
+            ->where('status', 1)
+            ->update(['status' => 2]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pembelian berhasil disimpan',
+            'data' => $pembelian
+        ]);
     }
 }

@@ -22,6 +22,7 @@ return new class extends Migration
             $table->unsignedBigInteger('lingkar')->nullable();
             $table->unsignedBigInteger('panjang')->nullable();
             $table->unsignedBigInteger('kondisi_id')->nullable();
+            $table->unsignedBigInteger('jenisproduk_id')->nullable();
             $table->enum('jenis_pembelian', ['daritoko', 'luartoko']);
             $table->unsignedBigInteger('total')->default(0);
             $table->string('terbilang')->nullable();
@@ -34,6 +35,7 @@ return new class extends Migration
             $table->foreign('kodepembelian')->references('kodepembelian')->on('pembelian')->cascadeOnDelete();
             $table->foreign('produk_id')->references('id')->on('produk')->nullOnDelete();
             $table->foreign('kondisi_id')->references('id')->on('kondisi')->nullOnDelete();
+            $table->foreign('jenisproduk_id')->references('id')->on('jenis_produk')->nullOnDelete();
             $table->foreign('oleh')->references('id')->on('users')->cascadeOnDelete();
         });
     }
