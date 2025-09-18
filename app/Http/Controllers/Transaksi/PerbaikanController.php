@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Transaksi;
 
 use Carbon\Carbon;
+use App\Models\Perbaikan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
@@ -27,5 +28,16 @@ class PerbaikanController extends Controller
         $kode = 'PBK-' . $now . '-' . $random . '-' . str_pad($lastNumber, 4, '0', STR_PAD_LEFT);
 
         return $kode;
+    }
+
+    public function getPerbaikan()
+    {
+        $perbaikan = Perbaikan::with(['produk','kondisi'])->get();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data perbaikan berhasil ditemukan',
+            'data' => $perbaikan
+        ]);
     }
 }

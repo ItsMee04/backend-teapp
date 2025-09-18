@@ -14,13 +14,14 @@ use App\Http\Controllers\Authentication\AuthController;
 use App\Http\Controllers\Pelanggan\PelangganController;
 use App\Http\Controllers\Produk\NampanProdukController;
 use App\Http\Controllers\Transaksi\PembelianController;
-use App\Http\Controllers\Transaksi\PembelianLuarTokoController;
+use App\Http\Controllers\Transaksi\PerbaikanController;
 use App\Http\Controllers\Transaksi\TransaksiController;
 use App\Http\Controllers\UserManagement\RoleController;
 use App\Http\Controllers\UserManagement\UserController;
 use App\Http\Controllers\UserManagement\JabatanController;
 use App\Http\Controllers\UserManagement\PegawaiController;
 use App\Http\Controllers\Transaksi\PembelianTokoController;
+use App\Http\Controllers\Transaksi\PembelianLuarTokoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -158,6 +159,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     //API TRANSAKSI PEMBELIAN
     Route::get('pembelian/getPembelian', [PembelianController::class, 'getPembelian']);
+
+    //API PERBAIKAN
+    Route::get('perbaikan/kodePerbaikan', [PerbaikanController::class, 'kodePerbaikan']);
+    Route::get('perbaikan/getPerbaikan', [PerbaikanController::class, 'getPerbaikan']);
 
 
 });

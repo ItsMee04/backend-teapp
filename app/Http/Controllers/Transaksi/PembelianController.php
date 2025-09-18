@@ -10,7 +10,7 @@ class PembelianController extends Controller
 {
     public function getPembelian()
     {
-        $pembelian = Pembelian::with(['pelanggan', 'suplier', 'keranjangPembelian'])->get();
+        $pembelian = Pembelian::with(['pelanggan', 'suplier', 'keranjangPembelian','user','user.pegawai'])->get();
         return response()->json([
             'status' => 'success',
             'message' => 'Data pembelian berhasil diambil',
