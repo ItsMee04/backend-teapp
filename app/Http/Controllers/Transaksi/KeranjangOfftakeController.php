@@ -78,4 +78,17 @@ class KeranjangOfftakeController extends Controller
             ], 500);
         }
     }
+
+    public function getKeranjangOfftake()
+    {
+        $offtake = Offtake::with(['pelanggan', 'user', 'user.pegawai', 'detailOfftake', 'detailOfftake.produk'])
+            ->where('status', 1)
+            ->first();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data keranjang offtake berhasil diambil',
+            'data' => $offtake
+        ]);
+    }
 }

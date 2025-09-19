@@ -21,6 +21,7 @@ use App\Http\Controllers\UserManagement\UserController;
 use App\Http\Controllers\UserManagement\JabatanController;
 use App\Http\Controllers\UserManagement\PegawaiController;
 use App\Http\Controllers\Transaksi\PembelianTokoController;
+use App\Http\Controllers\Transaksi\KeranjangOfftakeController;
 use App\Http\Controllers\Transaksi\PembelianLuarTokoController;
 
 /*
@@ -164,6 +165,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('perbaikan/kodePerbaikan', [PerbaikanController::class, 'kodePerbaikan']);
     Route::get('perbaikan/getPerbaikan', [PerbaikanController::class, 'getPerbaikan']);
 
+    //API OFFTAKE
+    Route::get('keranjangOfftake/getKeranjangOfftake', [KeranjangOfftakeController::class, 'getKeranjangOfftake']);
 
 });
 
