@@ -91,4 +91,33 @@ class KeranjangOfftakeController extends Controller
             'data' => $offtake
         ]);
     }
+
+    public function storeKeranjangOfftake(Request $request, $id)
+    {
+        $request->validate([
+            'pelanggan_id' => 'required|exists:pelanggan,id',
+            'keterangan' => 'nullable|string',
+        ]);
+
+        $offtake = Offtake::where('status', 1)
+            ->where('oleh', Auth::user()->id)
+            ->first();
+
+        if (!$offtake) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Tidak ada keranjang offtake yang aktif.',
+            ], 404);
+        }
+
+        $offtake->pelanggan_id = $request->pelanggan_id;
+        $offtake->keterangan = $request->keterangan;
+        $offtake->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Keranjang offtake berhasil diperbarui.',
+            'data' => $offtake
+        ]);
+    }
 }
