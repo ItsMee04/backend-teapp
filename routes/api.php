@@ -113,7 +113,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('nampanproduk/pindahProdukNampan', [NampanProdukController::class, 'pindahProduk']);
     Route::get('/produk/{id}/get-signed-url', [CetakBarcodeProduk::class, 'getSignedPrintUrl']);
     Route::get('/nampanProduk/getKategoriByJenis', [NampanProdukController::class, 'getKategoriByJenis']);
-    Route::get('/nampanProduk/getProdukToStoreNampan/{id}',[NampanProdukController::class, 'getProdukToStoreNampan']);
+    Route::get('/nampanProduk/getProdukToStoreNampan/{id}', [NampanProdukController::class, 'getProdukToStoreNampan']);
 
     //API PELANGGAN
     Route::get('pelanggan/getPelanggan', [PelangganController::class, 'getPelanggan']);
@@ -135,7 +135,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('pos/addToCart', [KeranjangController::class, 'addToCart']);
     Route::delete('pos/clearAllKeranjang', [KeranjangController::class, 'clearAllKeranjangApi']);
     Route::delete('pos/deleteKeranjangByID/{id}', [KeranjangController::class, 'deleteKeranjangApi']);
-    Route::post('pos/payment',[TransaksiController::class, 'payment']);
+    Route::post('pos/payment', [TransaksiController::class, 'payment']);
     Route::post('pos/konfirmasiPayment', [TransaksiController::class, 'konfirmasiPembayaran']);
 
     //API PEMBELIAN DARI TOKO
@@ -169,7 +169,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('keranjangOfftake/getKeranjangOfftake', [KeranjangOfftakeController::class, 'getKeranjangOfftake']);
     Route::get('keranjangOfftake/getKeranjangOfftakeAktif', [KeranjangOfftakeController::class, 'getKeranjangOfftakeAktif']);
     Route::post('keranjangOfftake/storeKeranjangOfftake', [KeranjangOfftakeController::class, 'storeKeranjangOfftake']);
-
+    Route::delete('keranjangOfftake/deleteProduk/{id}', [KeranjangOfftakeController::class, 'deleteProduk']);
 });
 
 

@@ -128,10 +128,10 @@ class KeranjangOfftakeController extends Controller
         $offtake = KeranjangOfftake::with(['produk','user.pegawai'])
             ->where('oleh', Auth::user()->id)
             ->where('status', 1)
-            ->first();
+            ->get();
 
         return response()->json([
-            'status' => 'success',
+            'success' => true,
             'message' => 'Data keranjang offtake berhasil diambil',
             'data' => $offtake
         ]);
@@ -213,6 +213,47 @@ class KeranjangOfftakeController extends Controller
             'message'       => 'Produk berhasil ditambahkan ke keranjang offtake',
             'kodetransaksi' => $kodeOfftake,
             'data'          => $keranjangBaru
+        ]);
+    }
+
+    public function deleteProduk($id)
+    {
+        $keranjangItem = KeranjangOfftake::where('id', $id)
+            ->where('oleh', Auth::user()->id)
+            ->where('status', 1)
+            ->first();
+
+        if (!$keranjangItem) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item keranjang tidak ditemukan atau sudah diproses.'
+            ], 404);
+        }
+
+        // ubah status jadi 0, bukan delete
+        $keranjangItem->status = 0;
+        $keranjangItem->update();
+
+        // --- AKTIFKAN PRODUK DI MASTER ---
+        if ($keranjangItem->produk_id) {
+            Produk::where('id', $keranjangItem->produk_id)
+                ->update(['status' => 1]);
+        }
+
+        // --- CEK SISA PRODUK AKTIF DI TRANSAKSI ---
+        $activeItems = KeranjangOfftake::where('kodetransaksi', $keranjangItem->kodetransaksi)
+            ->where('status', 1)
+            ->count();
+
+        // Kalau sudah tidak ada produk aktif, nonaktifkan transaksi
+        if ($activeItems == 0) {
+            Offtake::where('kodetransaksi', $keranjangItem->kodetransaksi)
+                ->update(['status' => 0]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Item keranjang berhasil dikeluarkan.'
         ]);
     }
 }
