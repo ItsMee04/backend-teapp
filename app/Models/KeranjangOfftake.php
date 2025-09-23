@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class KeranjangOfftake extends Model
 {
@@ -25,8 +26,23 @@ class KeranjangOfftake extends Model
         'status'
     ];
 
-    public function produk()
+    /**
+     * Get the produk that owns the KeranjangOfftake
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function produk(): BelongsTo
     {
-        return $this->belongsTo(Produk::class, 'produk_id');
+        return $this->belongsTo(Produk::class, 'produk_id', 'id');
+    }
+
+    /**
+     * Get the user that owns the KeranjangOfftake
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'oleh', 'id');
     }
 }

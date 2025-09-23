@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('kodetransaksi', 100)->unique();
             $table->date('tanggal');
-            $table->unsignedBigInteger('suplier_id');
+            $table->unsignedBigInteger('suplier_id')->nullable();
             $table->integer('total')->default(0);
-            $table->enum('pembayaran', ['lunas', 'hutang'])->default('hutang');
+            $table->enum('pembayaran', ['lunas', 'hutang'])->nullable();
             $table->text('keterangan')->nullable();
             $table->unsignedBigInteger('oleh');
             $table->integer('status');

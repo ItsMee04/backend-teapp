@@ -167,6 +167,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     //API OFFTAKE
     Route::get('keranjangOfftake/getKeranjangOfftake', [KeranjangOfftakeController::class, 'getKeranjangOfftake']);
+    Route::get('keranjangOfftake/getKeranjangOfftakeAktif', [KeranjangOfftakeController::class, 'getKeranjangOfftakeAktif']);
+    Route::post('keranjangOfftake/storeKeranjangOfftake', [KeranjangOfftakeController::class, 'storeKeranjangOfftake']);
 
 });
 
