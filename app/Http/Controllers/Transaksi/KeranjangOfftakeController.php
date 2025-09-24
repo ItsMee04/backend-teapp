@@ -5,11 +5,12 @@ namespace App\Http\Controllers\Transaksi;
 use Carbon\Carbon;
 use App\Models\Produk;
 use App\Models\Offtake;
+use App\Models\Keranjang;
+use App\Models\NampanProduk;
 use Illuminate\Http\Request;
 use App\Models\KeranjangOfftake;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use App\Models\Keranjang;
 use Illuminate\Support\Facades\Auth;
 
 class KeranjangOfftakeController extends Controller
@@ -125,7 +126,7 @@ class KeranjangOfftakeController extends Controller
 
     public function getKeranjangOfftakeAktif()
     {
-        $offtake = KeranjangOfftake::with(['produk','user.pegawai'])
+        $offtake = KeranjangOfftake::with(['produk', 'user.pegawai'])
             ->where('oleh', Auth::user()->id)
             ->where('status', 1)
             ->get();
@@ -206,6 +207,33 @@ class KeranjangOfftakeController extends Controller
                 'oleh'          => Auth::user()->id,
                 'status'        => 1,
             ]);
+
+            // Loop melalui setiap item keranjang yang ditemukan
+            foreach ($keranjangBaru as $keranjangItem) {
+                // Update produk menjadi tidak aktif (terjual)
+                Produk::where('id', $keranjangItem->produk_id)->update(['status' => 2]);
+
+                // Ambil entri nampan_produk asalnya (yang aktif)
+                $nampanProdukAwal = NampanProduk::where('produk_id', $keranjangItem->produk_id)
+                    ->where('status', 1)
+                    ->latest('id')
+                    ->first();
+
+                if ($nampanProdukAwal) {
+                    // Tandai yang awal sudah tidak aktif
+                    $nampanProdukAwal->update(['status' => 2]);
+
+                    // Buat histori keluar (entry baru)
+                    NampanProduk::create([
+                        'produk_id'     => $keranjangItem->produk_id,
+                        'nampan_id'     => $nampanProdukAwal->nampan_id,
+                        'jenis'         => 'keluar',
+                        'tanggal'       => Carbon::now(),
+                        'status'        => 2,
+                        'oleh'          => Auth::user()->id,
+                    ]);
+                }
+            }
         }
 
         return response()->json([
@@ -238,6 +266,23 @@ class KeranjangOfftakeController extends Controller
         if ($keranjangItem->produk_id) {
             Produk::where('id', $keranjangItem->produk_id)
                 ->update(['status' => 1]);
+
+            // --- AMBIL NAMPAN_ID DARI NAMPAN_PRODUK ---
+            $nampanId = NampanProduk::where('produk_id', $keranjangItem->produk_id)
+                ->orderBy('id', 'desc') // ambil history terakhir
+                ->value('nampan_id');
+
+            if ($nampanId) {
+                // --- BUAT HISTORY BARU DI NAMPAN_PRODUK ---
+                NampanProduk::create([
+                    'nampan_id' => $nampanId,
+                    'produk_id' => $keranjangItem->produk_id,
+                    'jenis'     => 'masuk', // karena balik ke nampan
+                    'tanggal'   => Carbon::today()->format('Y-m-d'),
+                    'status'    => 1,
+                    'oleh'      => Auth::id(),
+                ]);
+            }
         }
 
         // --- CEK SISA PRODUK AKTIF DI TRANSAKSI ---
@@ -253,7 +298,7 @@ class KeranjangOfftakeController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Item keranjang berhasil dikeluarkan.'
+            'message' => 'Item keranjang berhasil dikeluarkan dan produk dikembalikan ke nampan.'
         ]);
     }
 }
