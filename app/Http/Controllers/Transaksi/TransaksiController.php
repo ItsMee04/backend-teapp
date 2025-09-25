@@ -150,7 +150,7 @@ class TransaksiController extends Controller
     public function getTransaksi()
     {
         $transaksi = Transaksi::with('pelanggan', 'diskon', 'keranjang', 'keranjang.produk', 'keranjang.user', 'user', 'user.pegawai')
-            ->where('status', 2) // Hanya ambil transaksi dengan status 2 (selesai)
+            ->whereNot('status', 1) // Hanya ambil transaksi dengan status 2 (selesai)
             ->get();
 
         return response()->json([
