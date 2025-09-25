@@ -188,4 +188,68 @@ class TransaksiController extends Controller
             'data'    => $transaksi
         ]);
     }
+
+    public function batalTransaksi(Request $request)
+    {
+
+        DB::beginTransaction();
+
+        try {
+            $kodetransaksi = $request->kodetransaksi;
+
+            $transaksi = Transaksi::with('keranjang')->where('kodetransaksi', $kodetransaksi)->first();
+
+            if (!$transaksi) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Transaksi tidak ditemukan'
+                ], 404);
+            }
+
+            // Update transaksi jadi batal
+            $transaksi->update(['status' => 0]);
+
+            foreach ($transaksi->keranjang as $keranjangItem) {
+                // Update status keranjang
+                $keranjangItem->update(['status' => 0]);
+
+                // Update produk jadi aktif kembali
+                Produk::where('id', $keranjangItem->produk_id)->update(['status' => 1]);
+
+                // Ambil entry nampan_produk terakhir jenis keluar
+                $nampanKeluar = NampanProduk::where('produk_id', $keranjangItem->produk_id)
+                    ->where('jenis', 'keluar')
+                    ->latest('id')
+                    ->first();
+
+                if ($nampanKeluar) {
+                    // Tandai keluar itu tidak aktif lagi
+                    $nampanKeluar->update(['status' => 0]);
+
+                    // Masukkan entry balik (riwayat masuk lagi)
+                    NampanProduk::create([
+                        'produk_id' => $keranjangItem->produk_id,
+                        'nampan_id' => $nampanKeluar->nampan_id,
+                        'jenis'     => 'masuk',
+                        'tanggal'   => Carbon::now(),
+                        'status'    => 1,
+                        'oleh'      => Auth::id(),
+                    ]);
+                }
+            }
+
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaksi berhasil dibatalkan',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal membatalkan transaksi: ' . $e->getMessage(),
+            ]);
+        }
+    }
 }

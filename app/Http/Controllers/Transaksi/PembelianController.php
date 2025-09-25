@@ -17,4 +17,13 @@ class PembelianController extends Controller
             'data' => $pembelian
         ]);
     }
+
+    public function batalTransaksi(Request $request)
+    {
+        $kodepembelian = $request->kodepembelian;
+
+        $transaksi = Pembelian::with(['keranjangPembelian'])->where('kodepembelian',$kodepembelian)->get();
+
+        return response()->json(['success'=>true, 'message'=>'Transaksi berhasil dibatalkan', 'data'=>$transaksi]);
+    }
 }

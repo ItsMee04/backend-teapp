@@ -158,9 +158,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     //API TRANSAKSI PENJUALAN
     Route::get('transaksi/getTransaksi', [TransaksiController::class, 'getTransaksi']);
+    Route::post('transaksi/batalTransaksi',[TransaksiController::class, 'batalTransaksi']);
 
     //API TRANSAKSI PEMBELIAN
     Route::get('pembelian/getPembelian', [PembelianController::class, 'getPembelian']);
+    Route::post('pembelian/batalTransaksi',[PembelianController::class, 'batalTransaksi']);
 
     //API PERBAIKAN
     Route::get('perbaikan/kodePerbaikan', [PerbaikanController::class, 'kodePerbaikan']);
