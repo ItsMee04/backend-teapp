@@ -22,6 +22,7 @@ use App\Http\Controllers\UserManagement\JabatanController;
 use App\Http\Controllers\UserManagement\PegawaiController;
 use App\Http\Controllers\Transaksi\PembelianTokoController;
 use App\Http\Controllers\Transaksi\KeranjangOfftakeController;
+use App\Http\Controllers\Transaksi\OfftakeController;
 use App\Http\Controllers\Transaksi\PembelianLuarTokoController;
 
 /*
@@ -170,6 +171,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('keranjangOfftake/getKeranjangOfftakeAktif', [KeranjangOfftakeController::class, 'getKeranjangOfftakeAktif']);
     Route::post('keranjangOfftake/storeKeranjangOfftake', [KeranjangOfftakeController::class, 'storeKeranjangOfftake']);
     Route::delete('keranjangOfftake/deleteProduk/{id}', [KeranjangOfftakeController::class, 'deleteProduk']);
+    Route::post('keranjangOfftake/submitTransaksiOfftake', [KeranjangOfftakeController::class, 'submitTransaksi']);
+
+    Route::get('offtake/getTransaksiOfftake',[OfftakeController::class, 'getTransaksiOfftake']);
 });
 
 

@@ -301,4 +301,58 @@ class KeranjangOfftakeController extends Controller
             'message' => 'Item keranjang berhasil dikeluarkan dan produk dikembalikan ke nampan.'
         ]);
     }
+
+    public function submitTransaksi(Request $request)
+    {
+        $request->validate([
+            'kodetransaksi' => 'required|string',
+            'suplier'       => 'required',
+            'keterangan'    => 'nullable|string'
+        ]);
+
+        $kodetransaksi = $request->kodetransaksi;
+
+        // Ambil semua produk di keranjang yang aktif
+        $keranjang = KeranjangOfftake::where('kodetransaksi', $kodetransaksi)
+            ->where('status', 1)
+            ->get();
+
+        if ($keranjang->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada produk di keranjang'
+            ]);
+        }
+
+        $totalHarga = $keranjang->sum('total'); // pakai kolom total langsung
+        $angka = abs($totalHarga);
+        $terbilang = ucwords(trim($this->terbilang($angka))) . ' Rupiah';
+
+        $offtake = Offtake::where('kodetransaksi', $kodetransaksi)
+            ->where('status', 1)
+            ->update([
+                "suplier_id"    => $request->suplier,
+                "total"         => $totalHarga,
+                "terbilang"     => $terbilang,
+                "pembayaran"    => $request->pembayaran,
+                "keterangan"    => $request->keterangan,
+                "status"        => 2, // status 2 artinya sudah selesai / tidak aktif
+            ]);
+
+        // Ambil data pembelian yang baru diupdate
+        $offtake = Offtake::where('kodetransaksi', $kodetransaksi)
+            ->where('status', 2)
+            ->first();
+
+        // Update semua keranjang jadi status 2
+        KeranjangOfftake::where('kodetransaksi', $kodetransaksi)
+            ->where('status', 1)
+            ->update(['status' => 2]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pembelian berhasil disimpan',
+            'data' => $offtake
+        ]);
+    }
 }

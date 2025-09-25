@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Offtake extends Model
 {
@@ -25,5 +27,25 @@ class Offtake extends Model
     public function suplier()
     {
         return $this->belongsTo(Suplier::class, 'suplier_id');
+    }
+
+    /**
+     * Get all of the keranjangofftake for the Offtake
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function keranjangofftake(): HasMany
+    {
+        return $this->hasMany(KeranjangOfftake::class, 'kodetransaksi', 'kodetransaksi');
+    }
+
+    /**
+     * Get the user that owns the Offtake
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'oleh', 'id');
     }
 }
