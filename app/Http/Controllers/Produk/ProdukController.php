@@ -202,15 +202,17 @@ class ProdukController extends Controller
         return response()->json(['success' => true, 'message' => 'Produk Berhasil Dihapus.']);
     }
 
-    public function getProdukByScanbarcode($id)
+    public function getProdukByBarcode(Request $request)
     {
-        $produk = Produk::with(['jenisproduk', 'kondisi'])->where('kodeproduk', $id)->first();
+        $kodeproduk = $request->kodeproduk;
+
+        $produk = Produk::with(['jenisproduk', 'kondisi'])->where('kodeproduk', $kodeproduk)->get();
 
         if (!$produk) {
             return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan.'], 404);
         }
 
-        return response()->json(['success' => true, 'message' => 'Data Produk Berhasil Ditemukan', 'Data' => $produk]);
+        return response()->json(['success' => true, 'message' => 'Data Produk Berhasil Ditemukan', 'data' => $produk]);
     }
 
     public function getProdukBySearch(Request $request)
