@@ -68,13 +68,13 @@ class ProdukController extends Controller
         $barcodeGenerator->setStorPath(storage_path('app/public/barcode/'));
 
         // hasil barcode berupa base64 string
-        $barcodeBase64 = $barcodeGenerator->getBarcodePNG($kodeproduk, 'C128');
+        $barcodeBase64 = $barcodeGenerator->getBarcodeJPG($kodeproduk, 'C128');
 
         // ubah base64 ke binary PNG
         $barcodeImage = base64_decode($barcodeBase64);
 
         // nama file barcode
-        $barcodeFileName = 'barcode/' . $kodeproduk . '.png';
+        $barcodeFileName = 'barcode/' . $kodeproduk . '.jpg';
 
         // simpan ke storage/app/public/barcode/
         Storage::disk('public')->put($barcodeFileName, $barcodeImage);
