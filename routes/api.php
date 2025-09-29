@@ -56,7 +56,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('role/getRole', [RoleController::class, 'getRole']);
     Route::post('role/storeRole', [RoleController::class, 'storeRole']);
     Route::get('role/getRoleByID/{id}', [RoleController::class, 'getRoleByID']);
-    Route::post('role/updateRole/{id}', [RoleController::class, 'updateRole']);
+    Route::put('role/updateRole/{id}', [RoleController::class, 'updateRole']);
     Route::delete('role/deleteRole/{id}', [RoleController::class, 'deleteRole']);
 
     //API PEGAWAI
