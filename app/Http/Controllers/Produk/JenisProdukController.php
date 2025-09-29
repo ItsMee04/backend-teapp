@@ -37,7 +37,7 @@ class JenisProdukController extends Controller
         }
 
         $jenisproduk = JenisProduk::create([
-            'jenis_produk'          => $request->jenisproduk,
+            'jenis_produk'          => toUpper($request->jenisproduk),
             'image_jenis_produk'    => $imagejenisproduk,
             'status' => 1
         ]);
@@ -81,13 +81,13 @@ class JenisProdukController extends Controller
 
             JenisProduk::where('id', $id)
                 ->update([
-                    'jenis_produk'          => $request->jenisproduk,
+                    'jenis_produk'          => toUpper($request->jenisproduk),
                     'image_jenis_produk'    => $newImageJenisProduk,
                 ]);
         } else {
             JenisProduk::where('id', $id)
                 ->update([
-                    'jenis_produk'          => $request->jenisproduk,
+                    'jenis_produk'          => toUpper($request->jenisproduk),
                 ]);
         }
         return response()->json(['success' => true, 'message' => "Data Jenis Produk Berhasil Disimpan"]);

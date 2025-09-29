@@ -41,8 +41,8 @@ class PegawaiController extends Controller
 
         $store = Pegawai::create([
             'nip'           => $request->nip,
-            'nama'          => $request->nama,
-            'alamat'        => $request->alamat,
+            'nama'          => toUpper($request->nama),
+            'alamat'        => toUpper($request->alamat),
             'kontak'        => $request->kontak,
             'jabatan_id'    => $request->jabatan,
             'status'        => 1,
@@ -97,8 +97,8 @@ class PegawaiController extends Controller
 
             $updatepegawai = Pegawai::where('id', $id)
                 ->update([
-                    'nama'          => $request->nama,
-                    'alamat'        => $request->alamat,
+                    'nama'          => toUpper($request->nama),
+                    'alamat'        => toUpper($request->alamat),
                     'kontak'        => $request->kontak,
                     'jabatan_id'    => $request->jabatan,
                     'image_pegawai' => $newImagePegawai,
@@ -106,8 +106,8 @@ class PegawaiController extends Controller
         } else {
             $updatepegawai = Pegawai::where('id', $id)
                 ->update([
-                    'nama'          => $request->nama,
-                    'alamat'        => $request->alamat,
+                    'nama'          => toUpper($request->nama),
+                    'alamat'        => toUpper($request->alamat),
                     'kontak'        => $request->kontak,
                     'jabatan_id'    => $request->jabatan,
                 ]);

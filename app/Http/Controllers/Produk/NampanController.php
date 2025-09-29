@@ -41,7 +41,7 @@ class NampanController extends Controller
 
         $storeNampan = Nampan::create([
             'jenisproduk_id'  =>  $request->jenis,
-            'nampan'          =>  $request->nampan,
+            'nampan'          =>  toUpper($request->nampan),
             'tanggal'         =>  Carbon::now(),
             'status'          =>  1,
         ]);
@@ -77,7 +77,7 @@ class NampanController extends Controller
 
         // Update data nampan
         $nampan->update([
-            'nampan'            =>  $request->nampan,
+            'nampan'            =>  toUpper($request->nampan),
             'jenisproduk_id'    =>  $request->jenis
         ]);
 

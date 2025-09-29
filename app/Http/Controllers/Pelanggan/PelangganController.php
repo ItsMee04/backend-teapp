@@ -57,8 +57,8 @@ class PelangganController extends Controller
         $pelanggan = Pelanggan::create([
             'kodepelanggan' =>  $generateCode,
             'nik'           =>  $request->nik,
-            'nama'          =>  $request->nama,
-            'alamat'        =>  $request->alamat,
+            'nama'          =>  toUpper($request->nama),
+            'alamat'        =>  toUpper($request->alamat),
             'kontak'        =>  $request->kontak,
             'tanggal'       =>  $request->tanggal,
             'status'        =>  1,
@@ -119,8 +119,8 @@ class PelangganController extends Controller
         // Update data pelanggan
         $pelanggan->update([
             'nik'     => $request->nik,
-            'nama'    => $request->nama,
-            'alamat'  => $request->alamat,
+            'nama'    => toUpper($request->nama),
+            'alamat'  => toUpper($request->alamat),
             'kontak'  => $request->kontak,
             'tanggal' => $request->tanggal,
         ]);

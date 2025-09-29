@@ -27,7 +27,7 @@ class RoleController extends Controller
         ], $messages);
 
         $role = Role::create([
-            'role'      =>  $request->role,
+            'role'      =>  toUpper($request->role),
             'status'    =>  1,
         ]);
 
@@ -62,7 +62,7 @@ class RoleController extends Controller
 
         // Update data role
         $role->update([
-            'role' => $request->role,
+            'role' => toUpper($request->role),
         ]);
 
         return response()->json(['success' => true, 'message' => 'Role Berhasil Diperbarui.']);

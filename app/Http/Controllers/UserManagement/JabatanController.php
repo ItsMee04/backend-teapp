@@ -31,7 +31,7 @@ class JabatanController extends Controller
         ], $messages);
 
         $jabatan = Jabatan::create([
-            'jabatan'       =>  $request->jabatan,
+            'jabatan'       =>  toUpper($request->jabatan),
             'status'        =>  1,
         ]);
 
@@ -66,7 +66,7 @@ class JabatanController extends Controller
 
         // Update data jabatan
         $jabatan->update([
-            'jabatan' => $request->jabatan,
+            'jabatan' => toUpper($request->jabatan),
         ]);
 
         return response()->json(['success' => true, 'message' => 'Jabatan Berhasil Diperbarui.']);

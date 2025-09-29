@@ -27,7 +27,7 @@ class KondisiController extends Controller
         ], $messages);
 
         $Kondisi = Kondisi::create([
-            'kondisi'       =>  $request->kondisi,
+            'kondisi'       =>  toUpper($request->kondisi),
             'status'        =>  1,
         ]);
 
@@ -62,7 +62,7 @@ class KondisiController extends Controller
 
         // Update data kondisi
         $kondisi->update([
-            'kondisi' => $request->kondisi,
+            'kondisi' => toUpper($request->kondisi),
         ]);
 
         return response()->json(['success' => true, 'message' => 'Kondisi Berhasil Diperbarui.']);

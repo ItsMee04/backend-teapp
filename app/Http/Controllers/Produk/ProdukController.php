@@ -47,15 +47,15 @@ class ProdukController extends Controller
             'jenis'         =>  'required|' . Rule::in(JenisProduk::where('status', 1)->pluck('id')),
             'harga_jual'    =>  'integer',
             'harga_beli'    =>  'integer',
-            'keterangan'    =>  'string',
+            'keterangan'    =>  'nullable|string',
             'berat'         =>  [
                 'required',
                 'regex:/^\d+\.\d{1,}$/'
             ],
             'kondisi'       =>  'required',
             'karat'         =>  'required|integer',
-            'lingkar'       =>  'integer',
-            'panjang'       =>  'integer',
+            'lingkar'       =>  'nullable|integer',
+            'panjang'       =>  'nullable|integer',
             'imageProduk'   =>  'nullable|mimes:png,jpg',
         ], $messages);
 
@@ -79,6 +79,8 @@ class ProdukController extends Controller
         // simpan ke storage/app/public/barcode/
         Storage::disk('public')->put($barcodeFileName, $barcodeImage);
 
+        $imageProduk = null;
+
         if ($request->file('imageProduk')) {
             $extension = $request->file('imageProduk')->getClientOriginalExtension();
             $fileName = $kodeproduk . '.' . $extension;
@@ -88,16 +90,16 @@ class ProdukController extends Controller
 
         $data = Produk::create([
             'kodeproduk'        =>  $kodeproduk,
-            'nama'              =>  $request->nama,
+            'nama'              =>  toUpper($request->nama),
             'jenisproduk_id'    =>  $request->jenis,
             'kondisi_id'        =>  $request->kondisi,
             'berat'             =>  $request->berat,
             'karat'             =>  $request->karat,
-            'lingkar'           =>  $request->lingkar,
-            'panjang'           =>  $request->panjang,
+            'lingkar'           =>  $request->lingkar??0,
+            'panjang'           =>  $request->panjang??0,
             'harga_jual'        =>  $request->hargajual,
             'harga_beli'        =>  $request->hargabeli,
-            'keterangan'        =>  $request->keterangan,
+            'keterangan'        =>  toUpper($request->keterangan),
             'image_produk'      =>  $imageProduk,
             'status'            =>  1,
         ]);
@@ -153,7 +155,7 @@ class ProdukController extends Controller
 
             $updateProduk = Produk::where('id', $id)
                 ->update([
-                    'nama'              =>  $request->nama,
+                    'nama'              =>  toUpper($request->nama),
                     'jenisproduk_id'    =>  $request->jenis,
                     'kondisi_id'        =>  $request->kondisi,
                     'berat'             =>  $request->berat,
@@ -162,13 +164,13 @@ class ProdukController extends Controller
                     'panjang'           =>  $request->panjang,
                     'harga_jual'        =>  $request->hargajual,
                     'harga_beli'        =>  $request->hargabeli,
-                    'keterangan'        =>  $request->keterangan,
+                    'keterangan'        =>  toUpper($request->keterangan),
                     'image_produk'      =>  $newImage,
                 ]);
         } else {
             $updateProduk = Produk::where('id', $id)
                 ->update([
-                    'nama'              =>  $request->nama,
+                    'nama'              =>  toUpper($request->nama),
                     'jenisproduk_id'    =>  $request->jenis,
                     'kondisi_id'        =>  $request->kondisi,
                     'berat'             =>  $request->berat,
@@ -177,7 +179,7 @@ class ProdukController extends Controller
                     'panjang'           =>  $request->panjang,
                     'harga_jual'        =>  $request->hargajual,
                     'harga_beli'        =>  $request->hargabeli,
-                    'keterangan'        =>  $request->keterangan,
+                    'keterangan'        =>  toUpper($request->keterangan),
                 ]);
         }
 

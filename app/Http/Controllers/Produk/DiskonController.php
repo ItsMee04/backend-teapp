@@ -29,7 +29,7 @@ class DiskonController extends Controller
         ], $messages);
 
         $diskon = Diskon::create([
-            'diskon'    =>  $request->diskon,
+            'diskon'    =>  toUpper($request->diskon),
             'nilai'     =>  $request->nilai,
             'status'    =>  1,
         ]);
@@ -67,7 +67,7 @@ class DiskonController extends Controller
 
         // Update data diskon
         $diskon->update([
-            'diskon' => $request->diskon,
+            'diskon' => toUpper($request->diskon),
             'nilai'  => $request->nilai
         ]);
 

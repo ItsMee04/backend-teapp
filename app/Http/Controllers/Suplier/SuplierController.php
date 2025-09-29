@@ -53,9 +53,9 @@ class SuplierController extends Controller
 
         $suplier = Suplier::create([
             'kodesuplier'   =>  $generateCode,
-            'nama'          =>  $request->suplier,
+            'nama'          =>  toUpper($request->suplier),
             'kontak'        =>  $request->kontak,
-            'alamat'        =>  $request->alamat,
+            'alamat'        =>  toUpper($request->alamat),
             'status'        =>  1,
         ]);
 
@@ -85,9 +85,9 @@ class SuplierController extends Controller
 
         Suplier::where('id', $id)
             ->update([
-                'nama'          =>  $request->suplier,
+                'nama'          =>  toUpper($request->suplier),
                 'kontak'        =>  $request->kontak,
-                'alamat'        =>  $request->alamat,
+                'alamat'        =>  toUpper($request->alamat),
             ]);
 
         return response()->json(['success' => true, 'message' => 'Data Suplier Berhasil Diperbarui']);
