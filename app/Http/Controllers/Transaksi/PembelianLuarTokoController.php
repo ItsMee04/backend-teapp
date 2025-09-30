@@ -98,13 +98,13 @@ class PembelianLuarTokoController extends Controller
             $produk = Produk::create([
                 'kodeproduk'    => $kodeProduk,
                 'jenisproduk_id' => $request->jenis,
-                'nama'          => $request->nama,
+                'nama'          => toUpper($request->nama),
                 'harga_beli'    => $request->hargabeli,
                 'berat'         => $request->berat,
                 'karat'         => $request->karat,
-                'lingkar'       => $request->lingkar,
-                'panjang'       => $request->panjang,
-                'keterangan'    => $request->keterangan,
+                'lingkar'       => $request->lingkar??0,
+                'panjang'       => $request->panjang??0,
+                'keterangan'    => toUpper($request->keterangan),
                 'kondisi_id'    => $request->kondisi,
                 'status'        => 0, // produk baru dari luar toko = belum aktif
             ]);
@@ -143,12 +143,12 @@ class PembelianLuarTokoController extends Controller
                 'produk_id'         => $produk->id,
                 'kondisi_id'        => $produk->kondisi_id,
                 'jenisproduk_id'    => $produk->jenisproduk_id,
-                'nama'              => $produk->nama,
+                'nama'              => toUpper($produk->nama),
                 'harga_beli'        => $produk->harga_beli,
                 'berat'             => $produk->berat,
                 'karat'             => $produk->karat,
-                'lingkar'           => $produk->lingkar,
-                'panjang'           => $produk->panjang,
+                'lingkar'           => $produk->lingkar??0,
+                'panjang'           => $produk->panjang??0,
                 'total'             => $total,
                 'terbilang'         => $terbilang,
                 'keterangan'        => $produk->keterangan,
@@ -224,13 +224,13 @@ class PembelianLuarTokoController extends Controller
             // Simpan kondisi baru dulu ke produk
             $produk->update([
                 'jenisproduk_id' => $request->jenis,
-                'nama'           => $request->nama,
+                'nama'           => toUpper($request->nama),
                 'harga_beli'     => $request->hargabeli,
                 'berat'          => $request->berat,
                 'karat'          => $request->karat,
-                'lingkar'        => $request->lingkar,
-                'panjang'        => $request->panjang,
-                'keterangan'     => $request->keterangan,
+                'lingkar'        => $request->lingkar??0,
+                'panjang'        => $request->panjang??0,
+                'keterangan'     => toUpper($request->keterangan),
                 'kondisi_id'     => $request->kondisi,
             ]);
 
@@ -289,15 +289,15 @@ class PembelianLuarTokoController extends Controller
             $keranjang->update([
                 'kondisi_id'     => $request->kondisi,
                 'jenisproduk_id' => $request->jenis,
-                'nama'           => $request->nama,
+                'nama'           => toUpper($request->nama),
                 'harga_beli'     => $request->hargabeli,
                 'berat'          => $request->berat,
                 'karat'          => $request->karat,
-                'lingkar'        => $request->lingkar,
-                'panjang'        => $request->panjang,
+                'lingkar'        => $request->lingkar??0,
+                'panjang'        => $request->panjang??0,
                 'total'          => $total,
                 'terbilang'      => $terbilang,
-                'keterangan'     => $request->keterangan,
+                'keterangan'     => toUpper($request->keterangan),
             ]);
 
             return response()->json([
@@ -379,7 +379,7 @@ class PembelianLuarTokoController extends Controller
         $updateData = [
             "total"        => $totalHarga,
             "terbilang"    => $terbilang,
-            "catatan"      => $request->catatan,
+            "catatan"      => toUpper($request->catatan),
             "status"       => 2, // sudah selesai
             "pelanggan_id" => $request->pelanggan_id ?? null,
             "suplier_id"   => $request->suplier_id ?? null,

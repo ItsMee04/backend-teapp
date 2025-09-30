@@ -114,7 +114,7 @@ class PembelianTokoController extends Controller
     {
         $userId = Auth::id();
 
-        $activePembelian = KeranjangPembelian::where('oleh', $userId)
+        $activePembelian = KeranjangPembelian::with(['pembelian'])->where('oleh', $userId)
             ->where('status', 1)
             ->where('jenis_pembelian', 'daritoko')
             ->first();
@@ -124,8 +124,8 @@ class PembelianTokoController extends Controller
                 'success' => true,
                 'Data' => [
                     'kodepembelian' => $activePembelian->kodepembelian,
-                    'pelanggan_id' => $activePembelian->pelanggan_id,
-                    'pelanggan_nama' => $activePembelian->pelanggan->nama ?? null
+                    'pelanggan_id'  => $activePembelian->pembelian->pelanggan_id,
+                    'pelanggan_nama'=> $activePembelian->pembelian->pelanggan->nama,
                 ]
             ]);
         }
