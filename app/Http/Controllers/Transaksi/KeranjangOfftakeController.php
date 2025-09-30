@@ -335,7 +335,7 @@ class KeranjangOfftakeController extends Controller
                 "total"         => $totalHarga,
                 "terbilang"     => $terbilang,
                 "pembayaran"    => $request->pembayaran,
-                "keterangan"    => $request->keterangan,
+                "keterangan"    => toUpper($request->keterangan),
                 "status"        => 2, // status 2 artinya sudah selesai / tidak aktif
             ]);
 
