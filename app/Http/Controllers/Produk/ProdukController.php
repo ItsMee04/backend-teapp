@@ -129,7 +129,7 @@ class ProdukController extends Controller
             'jenis'         =>  'required|' . Rule::in(JenisProduk::where('status', 1)->pluck('id')),
             'harga_jual'    =>  'integer',
             'harga_beli'    =>  'integer',
-            'keterangan'    =>  'string',
+            'keterangan'    =>  'nullable|string',
             'berat'         =>  [
                 'required',
                 'regex:/^\d+\.\d{1,}$/'
