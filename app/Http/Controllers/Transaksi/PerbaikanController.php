@@ -12,6 +12,7 @@ use App\Models\KeranjangPembelian;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use GuzzleHttp\Handler\Proxy;
 
 class PerbaikanController extends Controller
 {
@@ -44,6 +45,49 @@ class PerbaikanController extends Controller
             'message' => 'Data perbaikan berhasil ditemukan',
             'data' => $perbaikan
         ]);
+    }
+
+    public function finalPerbaikan(Request $request)
+    {
+        $credentials = $request->validate([
+            'kodeperbaikan' => 'required|string',
+        ]);
+
+        $kodeperbaikan = $request->kodeperbaikan;
+
+        try {
+            $transaksi = Perbaikan::with(['produk'])
+                ->where('kodeperbaikan', $kodeperbaikan)
+                ->first();
+
+            if (!$transaksi) {
+                return response()->json(['success' => false, 'message' => 'Data perbaikan tidak ditemukan'], 404);
+            }
+
+            $query = $transaksi->update([
+                'keterangan'    => "Produk Selesai Diperbaiki",
+                'tanggalkeluar' => Carbon::now(),
+                'status'        => 2,
+            ]);
+
+            if ($query) {
+                Produk::where('id', $transaksi->produk_id)->update([
+                    'status' => 1,
+                ]);
+            }
+            return response()->json([
+                'success' => true,
+                'message' => 'Data transaksi berhasil difinal',
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error saat batalPerbaikan: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat membatalkan transaksi: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function batalPerbaikan(Request $request)
