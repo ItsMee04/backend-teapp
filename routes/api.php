@@ -168,6 +168,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     //API PERBAIKAN
     Route::get('perbaikan/kodePerbaikan', [PerbaikanController::class, 'kodePerbaikan']);
     Route::get('perbaikan/getPerbaikan', [PerbaikanController::class, 'getPerbaikan']);
+    Route::post('perbaikan/batalPerbaikan',[PerbaikanController::class, 'batalPerbaikan']);
 
     //API OFFTAKE
     Route::get('keranjangOfftake/getKeranjangOfftake', [KeranjangOfftakeController::class, 'getKeranjangOfftake']);
