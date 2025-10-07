@@ -21,9 +21,11 @@ class StokHarianController extends Controller
 
         // Map hasilnya ke array baru, bukan model
         $data = $nampanList->map(function ($nampan) {
-            $totalProduk = $nampan->nampanProduk->where('jenis','masuk')->where('status',1)->count();
+            $totalProduk = $nampan->nampanProduk->where('jenis','masuk')
+            ->unique('produk_id')
+            ->count();
 
-            $totalBerat = $nampan->nampanProduk->where('jenis','masuk')->where('status',1)->sum(function ($item) {
+            $totalBerat = $nampan->nampanProduk->where('jenis','masuk')->unique('produk_id')->sum(function ($item) {
                 return (float) ($item->produk->berat ?? 0);
             });
 
