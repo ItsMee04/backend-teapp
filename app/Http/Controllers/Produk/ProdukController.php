@@ -208,10 +208,10 @@ class ProdukController extends Controller
     {
         $kodeproduk = $request->kodeproduk;
 
-        $produk = Produk::where('kodeproduk', $kodeproduk)->first();
+        $produk = Produk::with(['jenisProduk','kondisi'])->where('kodeproduk', $kodeproduk)->first();
 
         if (!$produk) {
-            return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan.'], 404);
+            return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan.']);
         }
 
         return response()->json(['success' => true, 'message' => 'Data Produk Berhasil Ditemukan', 'data' => $produk]);

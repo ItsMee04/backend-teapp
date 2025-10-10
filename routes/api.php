@@ -99,7 +99,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('produk/getProdukByID/{id}', [ProdukController::class, 'getProdukByID']);
     Route::put('produk/updateProduk/{id}', [ProdukController::class, 'updateProduk']);
     Route::delete('produk/deleteProduk/{id}', [ProdukController::class, 'deleteProduk']);
-    Route::post('produk/getProdukByBarcode',[ProdukController::class, 'getProdukByBarcode']);
+
 
     //API NAMPAN
     Route::get('nampan/getNampan', [NampanController::class, 'getNampan']);
@@ -184,5 +184,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('stokharian/stoknampan',[StokHarianController::class, 'stokNampanHarian']);
 });
 
-
+Route::post('produk/getProdukByBarcode',[ProdukController::class, 'getProdukByBarcode']);
 Route::get('/produk/{id}/cetakbarcodeproduk', [CetakBarcodeProduk::class, 'PrintBarcodeProduk'])->name('produk.cetak_barcode'); // Nama route yang baru
