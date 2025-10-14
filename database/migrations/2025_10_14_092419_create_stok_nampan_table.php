@@ -18,9 +18,11 @@ return new class extends Migration
             $table->date('tanggal_input');
             $table->text('keterangan')->nullable();
             $table->enum('status', ['Batal','Proses','Final'])->default('proses');
+            $table->unsignedBigInteger('oleh');
             $table->timestamps();
 
             $table->foreign('nampan_id')->references('id')->on('nampan')->onDelete('cascade');
+            $table->foreign('oleh')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

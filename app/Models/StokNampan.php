@@ -17,6 +17,7 @@ class StokNampan extends Model
         'tanggal',
         'tanggal_input',
         'keterangan',
+        'oleh',
         'status'
     ];
 
@@ -28,5 +29,15 @@ class StokNampan extends Model
     public function nampan(): BelongsTo
     {
         return $this->belongsTo(Nampan::class, 'nampan_id', 'id');
+    }
+
+    /**
+     * Get the user that owns the StokNampan
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'oleh', 'id');
     }
 }

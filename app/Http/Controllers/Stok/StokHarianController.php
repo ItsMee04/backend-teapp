@@ -6,6 +6,7 @@ use App\Models\Nampan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\StokNampan;
+use Illuminate\Support\Facades\Auth;
 
 class StokHarianController extends Controller
 {
@@ -55,6 +56,83 @@ class StokHarianController extends Controller
             'success' => true,
             'message' => 'Data stok nampan ditemukan',
             'data' => $stokNampan
+        ]);
+    }
+
+    public function storeStokOpnameByPeriode(Request $request)
+    {
+        $request->validate([
+            'nampan_id' => 'required|exists:nampan,id',
+            'tanggal' => 'required|date'
+        ]);
+
+        $stokNampan = StokNampan::create([
+            'nampan_id'     => $request->nampan_id,
+            'tanggal'       => $request->tanggal,
+            'tanggal_input' => now(),
+            'keterangan'    => "Create Stok Opname",
+            'oleh'          => Auth::user()->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Stok opname berhasil disimpan',
+            'data' => $stokNampan
+        ]);
+    }
+
+    public function detailStokOpname(Request $request)
+    {
+        // Pastikan Anda memvalidasi dulu
+        $request->validate([
+            'nampan_id' => 'required',
+            'tanggal' => 'required|date'
+        ]);
+
+        // 1. Tentukan tanggal target dari request
+        $targetDate = $request->tanggal;
+        $targetNampanId = $request->nampan_id;
+
+        $stok_nampan_collection = StokNampan::query()
+            // ----------------------------------------------------------------------------------
+            // ✨ PENTING: Terapkan filter tanggal di dalam CLOSURE relasi 'nampan.nampanProduk'
+            // ----------------------------------------------------------------------------------
+            ->with([
+                'nampan.jenisProduk',
+                'nampan.nampanProduk' => function ($query) use ($targetDate) {
+                    // Ini akan memastikan hanya produk yang tanggalnya cocok yang dimuat
+                    $query->where('tanggal', $targetDate)
+                        // Jangan lupa memuat relasi 'produk' di sini jika diperlukan
+                        ->with('produk');
+                }
+            ])
+
+            // 2. Filter data StokNampan utama (opsional, tergantung struktur Anda)
+            // Filter berdasarkan ID Nampan di tabel StokNampan (jika kolomnya ada)
+            ->where('nampan_id', $targetNampanId)
+            // Filter berdasarkan tanggal di tabel StokNampan (jika kolomnya ada dan relevan)
+            ->where('tanggal', $targetDate)
+
+            // 3. Hapus whereHas yang sebelumnya Anda gunakan.
+            // whereHas hanya untuk filtering parent, bukan untuk membatasi data children yang di-load.
+
+            ->get();
+
+
+        // Cek apakah koleksi kosong
+        if ($stok_nampan_collection->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data stok nampan tidak ditemukan',
+            ]);
+        }
+
+        // Untuk API detail, lebih baik menggunakan ->first() atau ->firstOrFail()
+        // Jika Anda yakin hasilnya hanya 1, gunakan ->first() dan kembalikan 'data' => $stok_nampan_collection->first()
+        return response()->json([
+            'success' => true,
+            'message' => 'Data stok nampan ditemukan',
+            'data' => $stok_nampan_collection->first() ?? $stok_nampan_collection
         ]);
     }
 

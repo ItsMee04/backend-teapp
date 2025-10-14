@@ -183,6 +183,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     //API STOK
     Route::post('stokharian/getPeriodeStok', [StokHarianController::class, 'getPeriodeStokByNampan']);
     Route::get('stokharian/stoknampan',[StokHarianController::class, 'stokNampanHarian']);
+    Route::post('stokharian/createPeriodeStok', [StokHarianController::class, 'storeStokOpnameByPeriode']);
+    Route::post('stokharian/detailStokOpname', [StokHarianController::class, 'detailStokOpname']);
     Route::post('stokharian/getStokHarianByNampan',[StokHarianController::class, 'getStokHarianByNampan']);
 });
 
