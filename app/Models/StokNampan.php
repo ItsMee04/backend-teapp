@@ -13,23 +13,12 @@ class StokNampan extends Model
     protected $table    = 'stok_nampan';
     protected $fillable =
     [
-        'nampan_id',
         'tanggal',
         'tanggal_input',
         'keterangan',
         'oleh',
         'status'
     ];
-
-    /**
-     * Get the nampan that owns the StokNampan
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function nampan(): BelongsTo
-    {
-        return $this->belongsTo(Nampan::class, 'nampan_id', 'id');
-    }
 
     /**
      * Get the user that owns the StokNampan

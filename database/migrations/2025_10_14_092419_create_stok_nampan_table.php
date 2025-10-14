@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('stok_nampan', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('nampan_id');
             $table->date('tanggal');
             $table->date('tanggal_input');
             $table->text('keterangan')->nullable();
@@ -21,7 +20,6 @@ return new class extends Migration
             $table->unsignedBigInteger('oleh');
             $table->timestamps();
 
-            $table->foreign('nampan_id')->references('id')->on('nampan')->onDelete('cascade');
             $table->foreign('oleh')->references('id')->on('users')->onDelete('cascade');
         });
     }

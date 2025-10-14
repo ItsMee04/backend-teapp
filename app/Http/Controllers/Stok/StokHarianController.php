@@ -10,6 +10,26 @@ use Illuminate\Support\Facades\Auth;
 
 class StokHarianController extends Controller
 {
+    public function getPeriodeStok()
+    {
+        $stoknampan = StokNampan::with(['user'])
+            ->orderBy('tanggal', 'desc')
+            ->get();
+
+        if ($stoknampan->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data periode stok tidak ditemukan'
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data periode stok ditemukan',
+            'data' => $stoknampan
+        ]);
+    }
+
     public function getPeriodeStokByNampan(Request $request)
     {
         $nampan = Nampan::find($request->id);
