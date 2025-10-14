@@ -181,13 +181,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('offtake/getTransaksiOfftake',[OfftakeController::class, 'getTransaksiOfftake']);
 
     //API STOK
-    Route::get('stokharian/getPeriodeStok', [StokHarianController::class, 'getPeriodeStok']);
-
-    Route::post('stokharian/getPeriodeStok', [StokHarianController::class, 'getPeriodeStokByNampan']);
-    Route::get('stokharian/stoknampan',[StokHarianController::class, 'stokNampanHarian']);
+    Route::get('stokharian/getPeriodeStok', [StokHarianController::class, 'getPeriodeStok']);;
     Route::post('stokharian/createPeriodeStok', [StokHarianController::class, 'storeStokOpnameByPeriode']);
     Route::post('stokharian/detailStokOpname', [StokHarianController::class, 'detailStokOpname']);
-    Route::post('stokharian/getStokHarianByNampan',[StokHarianController::class, 'getStokHarianByNampan']);
+    Route::post('stokharian/finalStokOpname', [StokHarianController::class, 'finalStokOpname']);
+    Route::post('stokharian/cancelStokOpname', [StokHarianController::class, 'cancelStokOpname']);
 });
 
 Route::post('produk/getProdukByBarcode',[ProdukController::class, 'getProdukByBarcode']);

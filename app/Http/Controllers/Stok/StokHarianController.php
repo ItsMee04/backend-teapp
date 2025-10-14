@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Stok;
 
 use App\Models\Nampan;
+use App\Models\StokNampan;
+use App\Models\NampanProduk;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Models\StokNampan;
 use Illuminate\Support\Facades\Auth;
 
 class StokHarianController extends Controller
@@ -30,64 +31,13 @@ class StokHarianController extends Controller
         ]);
     }
 
-    public function getPeriodeStokByNampan(Request $request)
-    {
-        $nampan = Nampan::find($request->id);
-
-        if (!$nampan) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data baki tidak ditemukan'
-            ]);
-        }
-
-        $periodeStok = StokNampan::with(['nampan'])
-            ->where('nampan_id', $nampan->id)
-            ->orderBy('tanggal', 'desc')
-            ->get();
-
-        if ($periodeStok->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data periode stok tidak ditemukan'
-            ]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Data periode stok ditemukan',
-            'data' => $periodeStok
-        ]);
-    }
-
-    public function getDetailStokByPeriode(Request $request)
-    {
-        $stokNampan = StokNampan::with(['nampan', 'nampan.nampanProduk', 'nampan.jenisProduk', 'nampan.nampanProduk.produk'])
-            ->find($request->id);
-
-        if (!$stokNampan) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data stok nampan tidak ditemukan'
-            ]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Data stok nampan ditemukan',
-            'data' => $stokNampan
-        ]);
-    }
-
     public function storeStokOpnameByPeriode(Request $request)
     {
         $request->validate([
-            'nampan_id' => 'required|exists:nampan,id',
-            'tanggal' => 'required|date'
+            'tanggal' => 'required|date|unique:stok_nampan,tanggal'
         ]);
 
         $stokNampan = StokNampan::create([
-            'nampan_id'     => $request->nampan_id,
             'tanggal'       => $request->tanggal,
             'tanggal_input' => now(),
             'keterangan'    => "Create Stok Opname",
@@ -103,110 +53,132 @@ class StokHarianController extends Controller
 
     public function detailStokOpname(Request $request)
     {
-        // Pastikan Anda memvalidasi dulu
+        // ... (Validasi tanggal sama)
         $request->validate([
-            'nampan_id' => 'required',
-            'tanggal' => 'required|date'
+            'tanggal' => 'required|date_format:Y-m-d'
         ]);
 
-        // 1. Tentukan tanggal target dari request
         $targetDate = $request->tanggal;
-        $targetNampanId = $request->nampan_id;
 
-        $stok_nampan_collection = StokNampan::query()
-            // ----------------------------------------------------------------------------------
-            // ✨ PENTING: Terapkan filter tanggal di dalam CLOSURE relasi 'nampan.nampanProduk'
-            // ----------------------------------------------------------------------------------
-            ->with([
-                'nampan.jenisProduk',
-                'nampan.nampanProduk' => function ($query) use ($targetDate) {
-                    // Ini akan memastikan hanya produk yang tanggalnya cocok yang dimuat
-                    $query->where('tanggal', $targetDate)
-                        // Jangan lupa memuat relasi 'produk' di sini jika diperlukan
-                        ->with('produk');
-                }
-            ])
+        // ==========================================================
+        // A. QUERY UNTUK STOK AWAL (TOTAL SEMUA MASUK, TANPA TANGGAL)
+        // ... (Logika ini tetap sama)
+        // ==========================================================
 
-            // 2. Filter data StokNampan utama (opsional, tergantung struktur Anda)
-            // Filter berdasarkan ID Nampan di tabel StokNampan (jika kolomnya ada)
-            ->where('nampan_id', $targetNampanId)
-            // Filter berdasarkan tanggal di tabel StokNampan (jika kolomnya ada dan relevan)
-            ->where('tanggal', $targetDate)
-
-            // 3. Hapus whereHas yang sebelumnya Anda gunakan.
-            // whereHas hanya untuk filtering parent, bukan untuk membatasi data children yang di-load.
-
+        $stokAwalRaw = NampanProduk::query()
+            ->where('jenis', 'masuk')
+            ->join('produk', 'nampan_produk.produk_id', '=', 'produk.id')
+            ->selectRaw('
+            produk.jenisproduk_id,
+            SUM(produk.berat) as total_berat,
+            COUNT(nampan_produk.id) as total_potong
+        ')
+            ->groupBy('produk.jenisproduk_id')
             ->get();
 
-
-        // Cek apakah koleksi kosong
-        if ($stok_nampan_collection->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data stok nampan tidak ditemukan',
-            ]);
+        $stokAwal = [];
+        foreach ($stokAwalRaw as $item) {
+            $stokAwal[$item->jenisproduk_id] = [
+                'total_berat' => $item->total_berat,
+                'total_potong' => $item->total_potong,
+            ];
         }
 
-        // Untuk API detail, lebih baik menggunakan ->first() atau ->firstOrFail()
-        // Jika Anda yakin hasilnya hanya 1, gunakan ->first() dan kembalikan 'data' => $stok_nampan_collection->first()
+        // ==========================================================
+        // B. QUERY UNTUK PERGERAKAN HARI INI (DIFILTER TANGGAL)
+        //    ✨ Dikelompokkan berdasarkan jenis (masuk/keluar)
+        // ==========================================================
+
+        $pergerakanHarianRaw = NampanProduk::query()
+            ->where('tanggal', $targetDate)
+            ->join('produk', 'nampan_produk.produk_id', '=', 'produk.id')
+            ->selectRaw('
+            nampan_produk.jenis,
+            produk.jenisproduk_id,
+            SUM(produk.berat) as total_berat,
+            COUNT(nampan_produk.id) as total_potong
+        ')
+            ->groupBy('nampan_produk.jenis', 'produk.jenisproduk_id')
+            ->get();
+
+        // Mengubah koleksi menjadi associative array
+        // Struktur: ['masuk' => [jenis_id => {data}], 'keluar' => [jenis_id => {data}]]
+        $pergerakanHarian = [
+            'masuk' => [],
+            'keluar' => [],
+        ];
+
+        foreach ($pergerakanHarianRaw as $item) {
+            $pergerakanHarian[$item->jenis][$item->jenisproduk_id] = [
+                'total_berat' => $item->total_berat,
+                'total_potong' => $item->total_potong,
+            ];
+        }
+
+        // 3. Mengembalikan ketiga data dalam satu response
         return response()->json([
             'success' => true,
-            'message' => 'Data stok nampan ditemukan',
-            'data' => $stok_nampan_collection->first() ?? $stok_nampan_collection
+            'message' => 'Detail pergerakan dan stok awal ditemukan',
+            'data' => [
+                'stok_awal_summary' => $stokAwal,
+                'pergerakan_harian' => $pergerakanHarian, // Data baru yang sudah dipisahkan
+            ]
         ]);
     }
 
-    public function stokNampanHarian()
+    public function finalStokOpname(Request $request)
     {
-        $nampanList = Nampan::with(['nampanProduk', 'jenisProduk', 'nampanProduk.produk'])->get();
+        $request->validate([
+            'periode' => 'required',
+        ]);
 
-        if ($nampanList->isEmpty()) {
+        $stokNampan = StokNampan::where('id', $request->periode)->first();
+
+        if (!$stokNampan) {
             return response()->json([
                 'success' => false,
-                'message' => 'Data baki tidak ditemukan'
+                'message' => 'Data periode stok tidak ditemukan'
             ]);
         }
 
-        // Map hasilnya ke array baru, bukan model
-        $data = $nampanList->map(function ($nampan) {
-            $totalProduk = $nampan->nampanProduk->where('jenis', 'masuk')
-                ->unique('produk_id')
-                ->count();
-
-            $totalBerat = $nampan->nampanProduk->where('jenis', 'masuk')->unique('produk_id')->sum(function ($item) {
-                return (float) ($item->produk->berat ?? 0);
-            });
-
-            // ubah jadi array dan tambahkan field baru
-            $nampanArray = $nampan->toArray();
-            $nampanArray['totalproduk'] = $totalProduk;
-            $nampanArray['totalberat'] = number_format($totalBerat, 3, '.', '');
-
-            return $nampanArray;
-        });
+        $stokNampan->update([
+            'keterangan'    => "Final Stok Opname",
+            'oleh'          => Auth::user()->id,
+            'status'        => 'Final'
+        ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Data baki ditemukan',
-            'data' => $data
+            'message' => 'Stok opname berhasil difinal',
+            'data' => $stokNampan
         ]);
     }
 
-    public function getStokHarianByNampan(Request $request)
+    public function cancelStokOpname(Request $request)
     {
-        $nampan = Nampan::with(['nampanProduk', 'jenisProduk', 'nampanProduk.produk'])->find($request->id);
+        $request->validate([
+            'periode' => 'required',
+        ]);
 
-        if (!$nampan) {
+        $stokNampan = StokNampan::where('id', $request->periode)->first();
+
+        if (!$stokNampan) {
             return response()->json([
                 'success' => false,
-                'message' => 'Data baki tidak ditemukan'
+                'message' => 'Data periode stok tidak ditemukan'
             ]);
         }
 
+        $stokNampan->update([
+            'keterangan'    => "Batal Stok Opname",
+            'oleh'          => Auth::user()->id,
+            'status'        => 'Batal'
+        ]);
+
         return response()->json([
             'success' => true,
-            'message' => 'Data baki ditemukan',
-            'data' => $nampan
+            'message' => 'Stok opname berhasil dibatalkan',
+            'data' => $stokNampan
         ]);
     }
 }
