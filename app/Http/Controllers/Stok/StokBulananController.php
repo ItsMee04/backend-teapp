@@ -2,38 +2,82 @@
 
 namespace App\Http\Controllers\Stok;
 
-use App\Http\Controllers\Controller;
+use App\Models\StokNampan;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 
 class StokBulananController extends Controller
 {
-    public function getStokPeriode(Request $request)
+    public function getStokPeriodeBulanan()
     {
-        // Validasi input
+        $stoknampan = StokNampan::with('user')
+            ->orderByRaw('YEAR(tanggal) DESC')
+            ->orderByRaw('MONTH(tanggal) DESC')
+            ->get()
+            ->map(function ($item) {
+                // Tambah format periode (YYYY-MM)
+                $item->periode = date('Y-m', strtotime($item->tanggal));
+                return $item;
+            })
+            ->groupBy('periode') // Group by bulan-tahun
+            ->map(function ($group, $key) {
+                return [
+                    'periode' => $key,
+                    'items'   => $group->values()
+                ];
+            })
+            ->values(); // reset index biar array-nya rapi
+
+        if ($stoknampan->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data periode stok tidak ditemukan'
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data periode stok ditemukan',
+            'data' => $stoknampan
+        ]);
+    }
+
+    public function storeStokOpnameByPeriodeBulanan(Request $request)
+    {
         $request->validate([
-            'bulan' => 'required|integer|min:1|max:12',
-            'tahun' => 'required|integer|min:2000|max:' . date('Y'),
+            'tanggal' => 'required|string', // karena dari input type="month"
         ]);
 
-        $bulan = $request->input('bulan');
-        $tahun = $request->input('tahun');
+        // Ambil tahun dan bulan
+        [$tahun, $bulan] = explode('-', $request->tanggal);
 
-        // Logika untuk mengambil data stok bulanan berdasarkan bulan dan tahun
-        // Misalnya, menggunakan model Stok untuk query database
-        // $stokBulanan = Stok::whereMonth('tanggal', $bulan)
-        //                     ->whereYear('tanggal', $tahun)
-        //                     ->get();
+        // Misalnya diset ke tanggal 1 tiap bulan (opsional, bisa juga akhir bulan)
+        $tanggalFix = date('Y-m-d', strtotime("$tahun-$bulan-01"));
 
-        // Untuk contoh ini, kita akan mengembalikan data dummy
-        $stokBulanan = [
-            'bulan' => $bulan,
-            'tahun' => $tahun,
-            'data_stok' => [
-                ['item' => 'Produk A', 'jumlah' => 100],
-                ['item' => 'Produk B', 'jumlah' => 150],
-            ],
-        ];
+        // Cek biar tidak duplikat di bulan yang sama
+        $isExist = StokNampan::whereYear('tanggal', $tahun)
+            ->whereMonth('tanggal', $bulan)
+            ->exists();
 
-        return response()->json($stokBulanan);
+        if ($isExist) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Stok opname untuk bulan ini sudah ada!'
+            ], 422);
+        }
+
+        $stokNampan = StokNampan::create([
+            'tanggal'       => $tanggalFix,
+            'tanggal_input' => now(),
+            'keterangan'    => "Create Stok Opname Bulanan",
+            'oleh'          => Auth::user()->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Stok opname bulanan berhasil disimpan',
+            'data' => $stokNampan
+        ]);
     }
 }

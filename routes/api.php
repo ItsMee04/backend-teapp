@@ -8,12 +8,14 @@ use App\Http\Controllers\Produk\NampanController;
 use App\Http\Controllers\Produk\ProdukController;
 use App\Http\Controllers\Cetak\CetakBarcodeProduk;
 use App\Http\Controllers\Produk\KondisiController;
+use App\Http\Controllers\Stok\StokHarianController;
 use App\Http\Controllers\Suplier\SuplierController;
+use App\Http\Controllers\Stok\StokBulananController;
+use App\Http\Controllers\Transaksi\OfftakeController;
 use App\Http\Controllers\Produk\JenisProdukController;
 use App\Http\Controllers\Authentication\AuthController;
 use App\Http\Controllers\Pelanggan\PelangganController;
 use App\Http\Controllers\Produk\NampanProdukController;
-use App\Http\Controllers\Stok\StokHarianController;
 use App\Http\Controllers\Transaksi\PembelianController;
 use App\Http\Controllers\Transaksi\PerbaikanController;
 use App\Http\Controllers\Transaksi\TransaksiController;
@@ -23,7 +25,6 @@ use App\Http\Controllers\UserManagement\JabatanController;
 use App\Http\Controllers\UserManagement\PegawaiController;
 use App\Http\Controllers\Transaksi\PembelianTokoController;
 use App\Http\Controllers\Transaksi\KeranjangOfftakeController;
-use App\Http\Controllers\Transaksi\OfftakeController;
 use App\Http\Controllers\Transaksi\PembelianLuarTokoController;
 
 /*
@@ -186,6 +187,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('stokharian/detailStokOpname', [StokHarianController::class, 'detailStokOpname']);
     Route::post('stokharian/finalStokOpname', [StokHarianController::class, 'finalStokOpname']);
     Route::post('stokharian/cancelStokOpname', [StokHarianController::class, 'cancelStokOpname']);
+
+    //API STOK BULANAN
+    Route::get('stokbulanan/getStokPeriodeBulanan', [StokBulananController::class, 'getStokPeriodeBulanan']);
 });
 
 Route::post('produk/getProdukByBarcode',[ProdukController::class, 'getProdukByBarcode']);
