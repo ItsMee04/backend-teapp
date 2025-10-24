@@ -52,21 +52,21 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('jabatan/storeJabatan', [JabatanController::class, 'storeJabatan']);
     Route::get('jabatan/getJabatanByID/{id}', [JabatanController::class, 'getJabatanByID']);
     Route::put('jabatan/updateJabatan/{id}', [JabatanController::class, 'updateJabatan']);
-    Route::delete('jabatan/deleteJabatan/{id}', [JabatanController::class, 'deleteJabatan']);
+    Route::post('jabatan/deleteJabatan', [JabatanController::class, 'deleteJabatan']);
 
     //API ROLE
     Route::get('role/getRole', [RoleController::class, 'getRole']);
     Route::post('role/storeRole', [RoleController::class, 'storeRole']);
     Route::get('role/getRoleByID/{id}', [RoleController::class, 'getRoleByID']);
     Route::put('role/updateRole/{id}', [RoleController::class, 'updateRole']);
-    Route::delete('role/deleteRole/{id}', [RoleController::class, 'deleteRole']);
+    Route::post('role/deleteRole', [RoleController::class, 'deleteRole']);
 
     //API PEGAWAI
     Route::get('pegawai/getPegawai', [PegawaiController::class, 'getPegawai']);
     Route::post('pegawai/storePegawai', [PegawaiController::class, 'storePegawai']);
     Route::get('pegawai/getPegawaiByID/{id}', [PegawaiController::class, 'getPegawaiByID']);
     Route::put('pegawai/updatePegawai/{id}', [PegawaiController::class, 'updatePegawai']);
-    Route::delete('pegawai/deletePegawai/{id}', [PegawaiController::class, 'deletePegawai']);
+    Route::post('pegawai/deletePegawai', [PegawaiController::class, 'deletePegawai']);
 
     //API USERS
     Route::get('users/getUsers', [UserController::class, 'getUsers']);

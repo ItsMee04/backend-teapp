@@ -68,10 +68,10 @@ class RoleController extends Controller
         return response()->json(['success' => true, 'message' => 'Role Berhasil Diperbarui.']);
     }
 
-    public function deleteRole($id)
+    public function deleteRole(Request $request)
     {
         // Cari data role berdasarkan ID
-        $role = Role::find($id);
+        $role = Role::find($request->id);
 
         // Periksa apakah data ditemukan
         if (!$role) {

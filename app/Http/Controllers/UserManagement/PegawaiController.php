@@ -115,10 +115,10 @@ class PegawaiController extends Controller
         return response()->json(['success' => true, 'message' => "Data Pegawai Berhasil Disimpan", 'Data' => $pegawai]);
     }
 
-    public function deletePegawai($id)
+    public function deletePegawai(Request $request)
     {
         // Cari data jabatan berdasarkan ID
-        $pegawai = Pegawai::find($id);
+        $pegawai = Pegawai::find($request->id);
 
         // Periksa apakah data ditemukan
         if (!$pegawai) {
@@ -131,7 +131,7 @@ class PegawaiController extends Controller
             'status' => 0,
         ]);
         if ($update) {
-            User::where('pegawai_id', $id)
+            User::where('pegawai_id', $request->id)
                 ->update([
                     'status'     => 0
                 ]);

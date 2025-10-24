@@ -72,10 +72,10 @@ class JabatanController extends Controller
         return response()->json(['success' => true, 'message' => 'Jabatan Berhasil Diperbarui.']);
     }
 
-    public function deleteJabatan($id)
+    public function deleteJabatan(Request $request)
     {
         // Cari data jabatan berdasarkan ID
-        $jabatan = Jabatan::find($id);
+        $jabatan = Jabatan::find($request->id);
 
         // Periksa apakah data ditemukan
         if (!$jabatan) {

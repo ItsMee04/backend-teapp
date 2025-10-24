@@ -12,6 +12,7 @@ class StokBulananController extends Controller
     public function getStokPeriodeBulanan()
     {
         $stoknampan = StokNampan::with('user')
+            ->where('status', 'Final') // <-- Penambahan filter status 'Final'
             ->orderByRaw('YEAR(tanggal) DESC')
             ->orderByRaw('MONTH(tanggal) DESC')
             ->get()
@@ -21,10 +22,10 @@ class StokBulananController extends Controller
                 return $item;
             })
             ->groupBy('periode') // Group by bulan-tahun
-            ->map(function ($group, $key) {
+            ->keys()             // Ambil hanya keys (periode YYYY-MM) dari grouping
+            ->map(function ($periode) {
                 return [
-                    'periode' => $key,
-                    'items'   => $group->values()
+                    'periode' => $periode,
                 ];
             })
             ->values(); // reset index biar array-nya rapi
