@@ -186,10 +186,10 @@ class ProdukController extends Controller
         return response()->json(['success' => true, 'message' => 'Data Produk Berhasil Disimpan', 'Data' => $produk]);
     }
 
-    public function deleteProduk($id)
+    public function deleteProduk(Request $request)
     {
         // Cari data produk berdasarkan ID
-        $produk = Produk::find($id);
+        $produk = Produk::find($request->id);
 
         // Periksa apakah data ditemukan
         if (!$produk) {

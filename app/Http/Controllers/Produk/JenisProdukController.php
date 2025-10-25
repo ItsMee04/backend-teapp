@@ -93,10 +93,10 @@ class JenisProdukController extends Controller
         return response()->json(['success' => true, 'message' => "Data Jenis Produk Berhasil Disimpan"]);
     }
 
-    public function deleteJenisProduk($id)
+    public function deleteJenisProduk(Request $request)
     {
         // Cari data jenis produk berdasarkan ID
-        $jenisproduk = JenisProduk::find($id);
+        $jenisproduk = JenisProduk::find($request->id);
 
         // Periksa apakah data ditemukan
         if (!$jenisproduk) {
