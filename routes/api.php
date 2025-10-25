@@ -78,14 +78,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('kondisi/storeKondisi', [KondisiController::class, 'storeKondisi']);
     Route::get('kondisi/getKondisiByID/{id}', [KondisiController::class, 'getKondisiByID']);
     Route::put('kondisi/updateKondisi/{id}', [KondisiController::class, 'updateKondisi']);
-    Route::delete('kondisi/deleteKondisi/{id}', [KondisiController::class, 'deletekondisi']);
+    Route::post('kondisi/deleteKondisi', [KondisiController::class, 'deletekondisi']);
 
     //API DISKON
     Route::get('diskon/getDiskon', [DiskonController::class, 'getDiskon']);
     Route::post('diskon/storeDiskon', [DiskonController::class, 'storeDiskon']);
     Route::get('diskon/getDiskonByID/{id}', [DiskonController::class, 'getDiskonByID']);
     Route::put('diskon/updateDiskon/{id}', [DiskonController::class, 'updateDiskon']);
-    Route::delete('diskon/deleteDiskon/{id}', [DiskonController::class, 'deleteDiskon']);
+    Route::post('diskon/deleteDiskon', [DiskonController::class, 'deleteDiskon']);
 
     //API JENISPRODUK
     Route::get('jenisproduk/getJenisProduk', [JenisProdukController::class, 'getJenisProduk']);

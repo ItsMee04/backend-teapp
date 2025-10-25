@@ -74,10 +74,10 @@ class DiskonController extends Controller
         return response()->json(['success' => true, 'message' => 'Diskon Berhasil Diperbarui.']);
     }
 
-    public function deleteDiskon($id)
+    public function deleteDiskon(Request $request)
     {
         // Cari data diskon berdasarkan ID
-        $diskon = Diskon::find($id);
+        $diskon = Diskon::find($request->id);
 
         // Periksa apakah data ditemukan
         if (!$diskon) {

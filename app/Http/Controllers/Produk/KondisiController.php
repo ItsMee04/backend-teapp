@@ -68,10 +68,10 @@ class KondisiController extends Controller
         return response()->json(['success' => true, 'message' => 'Kondisi Berhasil Diperbarui.']);
     }
 
-    public function deletekondisi($id)
+    public function deletekondisi(Request $request)
     {
         // Cari data kondisi berdasarkan ID
-        $kondisi = Kondisi::find($id);
+        $kondisi = Kondisi::find($request->id);
 
         // Periksa apakah data ditemukan
         if (!$kondisi) {
