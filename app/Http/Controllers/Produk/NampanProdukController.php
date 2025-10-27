@@ -242,10 +242,10 @@ class NampanProdukController extends Controller
         return $produk ? $produk->berat : 0;
     }
 
-    public function deleteNampanProduk($id)
+    public function deleteNampanProduk(Request $request)
     {
         // Cari data produk berdasarkan ID
-        $nampanProduk = NampanProduk::find($id);
+        $nampanProduk = NampanProduk::find($request->id);
 
         // Periksa apakah data ditemukan
         if (!$nampanProduk) {
