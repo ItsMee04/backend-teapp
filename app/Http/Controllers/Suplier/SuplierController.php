@@ -44,7 +44,7 @@ class SuplierController extends Controller
         ];
 
         $credentials = $request->validate([
-            'suplier'         => 'required',
+            'nama'            => 'required',
             'alamat'          => 'required',
             'kontak'          => 'required|numeric',
         ], $messages);
@@ -53,7 +53,7 @@ class SuplierController extends Controller
 
         $suplier = Suplier::create([
             'kodesuplier'   =>  $generateCode,
-            'nama'          =>  toUpper($request->suplier),
+            'nama'          =>  toUpper($request->nama),
             'kontak'        =>  $request->kontak,
             'alamat'        =>  toUpper($request->alamat),
             'status'        =>  1,
@@ -78,14 +78,14 @@ class SuplierController extends Controller
         ];
 
         $credentials = $request->validate([
-            'suplier'         => 'required',
+            'nama'            => 'required',
             'alamat'          => 'required',
             'kontak'          => 'required|numeric',
         ], $messages);
 
         Suplier::where('id', $id)
             ->update([
-                'nama'          =>  toUpper($request->suplier),
+                'nama'          =>  toUpper($request->nama),
                 'kontak'        =>  $request->kontak,
                 'alamat'        =>  toUpper($request->alamat),
             ]);
@@ -93,10 +93,10 @@ class SuplierController extends Controller
         return response()->json(['success' => true, 'message' => 'Data Suplier Berhasil Diperbarui']);
     }
 
-    public function deleteSuplier($id)
+    public function deleteSuplier(Request $request)
     {
         // Cari data suplier berdasarkan ID
-        $suplier = Suplier::find($id);
+        $suplier = Suplier::find($request->id);
 
         // Periksa apakah data ditemukan
         if (!$suplier) {

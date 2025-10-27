@@ -125,14 +125,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('pelanggan/storePelanggan', [PelangganController::class, 'storePelanggan']);
     Route::get('pelanggan/getPelangganByID/{id}', [PelangganController::class, 'getPelangganByID']);
     Route::put('pelanggan/updatePelanggan/{id}', [PelangganController::class, 'updatePelanggan']);
-    Route::delete('pelanggan/deletePelanggan/{id}', [PelangganController::class, 'deletePelanggan']);
+    Route::post('pelanggan/deletePelanggan', [PelangganController::class, 'deletePelanggan']);
 
     //API SUPLIER
     Route::get('suplier/getSuplier', [SuplierController::class, 'getSuplier']);
     Route::post('suplier/storeSuplier', [SuplierController::class, 'storeSuplier']);
     Route::get('suplier/getSuplierByID/{id}', [SuplierController::class, 'getSuplierByID']);
     Route::put('suplier/updateSuplier/{id}', [SuplierController::class, 'updateSuplier']);
-    Route::delete('suplier/deleteSuplier/{id}', [SuplierController::class, 'deleteSuplier']);
+    Route::post('suplier/deleteSuplier', [SuplierController::class, 'deleteSuplier']);
 
     //API KERANJANG & TRANSAKSI
     Route::get('pos/getKeranjang', [KeranjangController::class, 'getKeranjang']);

@@ -128,10 +128,10 @@ class PelangganController extends Controller
         return response()->json(['success' => true, 'message' => 'Data Pelanggan Berhasil Diperbarui']);
     }
 
-    public function deletePelanggan($id)
+    public function deletePelanggan(Request $request)
     {
         // Cari data pelanggan berdasarkan ID
-        $pelanggan = Pelanggan::find($id);
+        $pelanggan = Pelanggan::find($request->id);
 
         // Periksa apakah data ditemukan
         if (!$pelanggan) {
