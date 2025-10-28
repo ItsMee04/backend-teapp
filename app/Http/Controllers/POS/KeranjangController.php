@@ -229,19 +229,35 @@ class KeranjangController extends Controller
                 ->where('status', 1)
                 ->first();
 
-            // Jika ada transaksi aktif, ubah status semua item keranjang menjadi 0
-            if ($activeTransaksi) {
-                Keranjang::where('kodetransaksi', $activeTransaksi->kodetransaksi)
-                    ->where('status', 1)
-                    ->update(['status' => 0]);
+            // Jika tidak ada transaksi aktif
+            if (!$activeTransaksi) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada transaksi aktif untuk dikosongkan.'
+                ]);
             }
 
-            // Selain mengubah status item di keranjang, kita juga harus mengubah status transaksi
-            // Karena tidak ada lagi item di dalamnya, transaksi ini tidak lagi 'aktif'.
-            if ($activeTransaksi) {
-                $activeTransaksi->status = 2; // Mengganti status menjadi 'dibatalkan'
-                $activeTransaksi->save();
+            // Cek apakah ada item keranjang aktif dengan kode transaksi ini
+            $activeKeranjangCount = Keranjang::where('kodetransaksi', $activeTransaksi->kodetransaksi)
+                ->where('status', 1)
+                ->count();
+
+            // Jika keranjang sudah kosong, jangan lakukan apapun
+            if ($activeKeranjangCount === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Keranjang sudah kosong.'
+                ]);
             }
+
+            // Jika masih ada, ubah status semua item keranjang menjadi 0 (nonaktif)
+            Keranjang::where('kodetransaksi', $activeTransaksi->kodetransaksi)
+                ->where('status', 1)
+                ->update(['status' => 0]);
+
+            // Ubah juga status transaksi menjadi "dibatalkan" (status = 2)
+            $activeTransaksi->status = 2;
+            $activeTransaksi->save();
 
             return response()->json([
                 'success' => true,
