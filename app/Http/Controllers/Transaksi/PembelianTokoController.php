@@ -13,6 +13,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Transaksi\PerbaikanController;
 
+use function PHPUnit\Framework\isEmpty;
+
 class PembelianTokoController extends Controller
 {
     public function getPembelianProduk()
@@ -114,25 +116,32 @@ class PembelianTokoController extends Controller
     {
         $userId = Auth::id();
 
-        $activePembelian = KeranjangPembelian::with(['pembelian'])->where('oleh', $userId)
+        $activePembelian = KeranjangPembelian::with(['pembelian.pelanggan'])
+            ->where('oleh', $userId)
             ->where('status', 1)
             ->where('jenis_pembelian', 'daritoko')
-            ->first();
+            ->get();
 
-        if ($activePembelian) {
+        if ($activePembelian->isEmpty()) {
             return response()->json([
-                'success' => true,
-                'Data' => [
-                    'kodepembelian' => $activePembelian->kodepembelian,
-                    'pelanggan_id'  => $activePembelian->pembelian->pelanggan_id,
-                    'pelanggan_nama'=> $activePembelian->pembelian->pelanggan->nama,
-                ]
+                'success' => false,
+                'message' => 'Data Transaksi tidak ditemukan',
+                'Data' => [],
             ]);
         }
 
+        // map() untuk ubah collection ke array custom
+        $data = $activePembelian->map(function ($item) {
+            return [
+                'kodepembelian' => $item->kodepembelian,
+                'pelanggan_id'  => $item->pembelian->pelanggan_id ?? null,
+                'pelanggan_nama' => $item->pembelian->pelanggan->nama ?? null,
+            ];
+        });
+
         return response()->json([
-            'success' => false,
-            'message' => 'Tidak ada transaksi aktif'
+            'success' => true,
+            'data' => $data,
         ]);
     }
 

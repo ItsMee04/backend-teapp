@@ -165,15 +165,20 @@ class TransaksiController extends Controller
         $transaksi = Transaksi::with([
             'pelanggan',
             'diskon',
-            'keranjang',
-            'keranjang.produk',
-            'keranjang.user',
+            'keranjang' => function ($query) {
+                $query->where('status', 2) // filter keranjang
+                    ->with(['produk', 'user']); // eager load nested relasi
+            },
             'user',
             'user.pegawai'
         ])
             ->where('kodetransaksi', $request->kodetransaksi)
-            ->where('status', 2) // Hanya ambil transaksi dengan status 2 (selesai)
+            ->where('status', 2) // hanya transaksi selesai
+            ->whereHas('keranjang', function ($query) {
+                $query->where('status', 2); // hanya ambil transaksi yang punya keranjang status 2
+            })
             ->get();
+
 
         // Cek apakah koleksi kosong
         if ($transaksi->isEmpty()) {
