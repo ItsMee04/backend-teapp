@@ -160,7 +160,7 @@ class TransaksiController extends Controller
         ]);
     }
 
-    public function getTransaksiByKode($id)
+    public function getTransaksiByKode(Request $request)
     {
         $transaksi = Transaksi::with([
             'pelanggan',
@@ -171,11 +171,12 @@ class TransaksiController extends Controller
             'user',
             'user.pegawai'
         ])
-            ->where('kodetransaksi', $id)
+            ->where('kodetransaksi', $request->kodetransaksi)
             ->where('status', 2) // Hanya ambil transaksi dengan status 2 (selesai)
-            ->first();
+            ->get();
 
-        if (!$transaksi) {
+        // Cek apakah koleksi kosong
+        if ($transaksi->isEmpty()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Data Transaksi tidak ditemukan',

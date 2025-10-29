@@ -144,7 +144,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('pos/konfirmasiPayment', [TransaksiController::class, 'konfirmasiPembayaran']);
 
     //API PEMBELIAN DARI TOKO
-    Route::get('transaksi/getTransaksiByKode/{id}', [TransaksiController::class, 'getTransaksiByKode']);
+    Route::post('transaksi/getTransaksiByKode', [TransaksiController::class, 'getTransaksiByKode']);
     Route::get('pembelianToko/getPembelianProduk', [PembelianTokoController::class, 'getPembelianProduk']);
     Route::get('pembelianToko/getKodePembelianAktif', [PembelianTokoController::class, 'getKodePembelianAktif']);
     Route::post('pembelianToko/pilihProduk', [PembelianTokoController::class, 'pilihProduk']);
