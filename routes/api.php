@@ -101,12 +101,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('produk/updateProduk/{id}', [ProdukController::class, 'updateProduk']);
     Route::post('produk/deleteProduk', [ProdukController::class, 'deleteProduk']);
 
-
     //API NAMPAN
     Route::get('nampan/getNampan', [NampanController::class, 'getNampan']);
     Route::post('nampan/storeNampan', [NampanController::class, 'storeNampan']);
     Route::get('nampan/getNampanByID/{id}', [NampanController::class, 'getNampanByID']);
     Route::put('nampan/updateNampan/{id}', [NampanController::class, 'updateNampan']);
+    Route::post('nampan/deleteNampan', [NampanController::class, 'deleteNampan']);
 
     //API NAMPAN PRODUK
     Route::get('nampanProduk/getNampanProduk/{id}', [NampanProdukController::class, 'getNampanProduk']);

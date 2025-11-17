@@ -83,4 +83,29 @@ class NampanController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Nampan Berhasil Diperbarui.']);
     }
+
+    public function deleteNampan(Request $request)
+    {
+        $messages = [
+            'required' => ':attribute wajib di isi !!!',
+        ];
+
+        $credentials = $request->validate([
+            'id'         => 'required',
+        ], $messages);
+
+        $nampan = Nampan::where('id', $request->id)->first();
+
+        // Periksa apakah data ditemukan
+        if (!$nampan) {
+            return response()->json(['success' => false, 'message' => 'Nampan tidak ditemukan.'], 404);
+        }
+
+        // Update data nampan
+        $nampan->update([
+            'status'            =>  0
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Nampan Berhasil Dihapus.']);
+    }
 }
