@@ -55,6 +55,7 @@ class StokHarianController extends Controller
     {
         // ... (Validasi tanggal sama)
         $request->validate([
+            'status'  => 'required',
             'tanggal' => 'required|date_format:Y-m-d'
         ]);
 
@@ -67,6 +68,7 @@ class StokHarianController extends Controller
 
         $stokAwalRaw = NampanProduk::query()
             ->where('jenis', 'masuk')
+            ->where('nampan_produk.status', '!=', 0) // <-- DITAMBAHKAN
             ->join('produk', 'nampan_produk.produk_id', '=', 'produk.id')
             ->selectRaw('
             produk.jenisproduk_id,
@@ -91,6 +93,7 @@ class StokHarianController extends Controller
 
         $pergerakanHarianRaw = NampanProduk::query()
             ->where('tanggal', $targetDate)
+            ->where('nampan_produk.status', '!=', 0) // <-- DITAMBAHKAN
             ->join('produk', 'nampan_produk.produk_id', '=', 'produk.id')
             ->selectRaw('
             nampan_produk.jenis,
