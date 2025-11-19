@@ -55,7 +55,6 @@ class StokHarianController extends Controller
     {
         // ... (Validasi tanggal sama)
         $request->validate([
-            'status'  => 'required',
             'tanggal' => 'required|date_format:Y-m-d'
         ]);
 

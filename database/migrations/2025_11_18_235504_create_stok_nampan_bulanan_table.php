@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('stok_nampan_bulanan', function (Blueprint $table) {
             $table->id();
-            $table->string('bulan', 100);
+            $table->date('tanggal');
             $table->date('tanggal_input');
             $table->string('keterangan', 100);
             $table->enum('status_final', ['PROSES', 'FINAL','BATAL']);
