@@ -5,32 +5,18 @@ namespace App\Http\Controllers\Stok;
 use App\Models\StokNampan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\StokNampanBulanan;
 use Illuminate\Support\Facades\Auth;
 
 class StokBulananController extends Controller
 {
     public function getStokPeriodeBulanan()
     {
-        $stoknampan = StokNampan::with('user')
-            ->where('status', 'Final') // <-- Penambahan filter status 'Final'
-            ->orderByRaw('YEAR(tanggal) DESC')
-            ->orderByRaw('MONTH(tanggal) DESC')
-            ->get()
-            ->map(function ($item) {
-                // Tambah format periode (YYYY-MM)
-                $item->periode = date('Y-m', strtotime($item->tanggal));
-                return $item;
-            })
-            ->groupBy('periode') // Group by bulan-tahun
-            ->keys()             // Ambil hanya keys (periode YYYY-MM) dari grouping
-            ->map(function ($periode) {
-                return [
-                    'periode' => $periode,
-                ];
-            })
-            ->values(); // reset index biar array-nya rapi
+        $stokNampanBulanan = StokNampanBulanan::with(['user'])
+            ->orderBy('tanggal', 'desc')
+            ->get();
 
-        if ($stoknampan->isEmpty()) {
+        if ($stokNampanBulanan->isEmpty()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Data periode stok tidak ditemukan'
@@ -40,45 +26,54 @@ class StokBulananController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Data periode stok ditemukan',
-            'data' => $stoknampan
+            'data' => $stokNampanBulanan
         ]);
     }
 
     public function storeStokOpnameByPeriodeBulanan(Request $request)
     {
         $request->validate([
-            'tanggal' => 'required|string', // karena dari input type="month"
+            'tanggal' => 'required|date|unique:stok_nampan_bulanan,tanggal'
         ]);
 
-        // Ambil tahun dan bulan
-        [$tahun, $bulan] = explode('-', $request->tanggal);
-
-        // Misalnya diset ke tanggal 1 tiap bulan (opsional, bisa juga akhir bulan)
-        $tanggalFix = date('Y-m-d', strtotime("$tahun-$bulan-01"));
-
-        // Cek biar tidak duplikat di bulan yang sama
-        $isExist = StokNampan::whereYear('tanggal', $tahun)
-            ->whereMonth('tanggal', $bulan)
-            ->exists();
-
-        if ($isExist) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Stok opname untuk bulan ini sudah ada!'
-            ], 422);
-        }
-
-        $stokNampan = StokNampan::create([
-            'tanggal'       => $tanggalFix,
+        $stokNampanBulanan = StokNampanBulanan::create([
+            'tanggal'       => $request->tanggal,
             'tanggal_input' => now(),
-            'keterangan'    => "Create Stok Opname Bulanan",
+            'keterangan'    => $request->keterangan || "Create Stok Opname",
             'oleh'          => Auth::user()->id,
+            'status'        => 1,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Stok opname bulanan berhasil disimpan',
-            'data' => $stokNampan
+            'message' => 'Periode stok berhasil disimpan'
+        ]);
+    }
+
+    public function detailSokOpnamePeriodeBulanan(Request $request)
+    {
+        $request->validate([
+            'tanggal' => 'required|date'
+        ]);
+
+        $targetDate = $request->tanggal;
+
+        $stokNampanPerBulan = StokNampan::with(['user'])->whereRaw("DATE_FORMAT(tanggal, '%Y-%m') = ?", [$targetDate])
+            ->where('status', 'Final')
+            ->get();
+
+
+        if ($stokNampanPerBulan->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data periode stok tidak ditemukan'
+            ]);
+        }
+
+        return response()->json([
+            'success'   => true,
+            'message'   => 'Periode stok berhasil ditemukan',
+            'data'      => $stokNampanPerBulan
         ]);
     }
 }

@@ -191,6 +191,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     //API STOK BULANAN
     Route::get('stokbulanan/getStokPeriodeBulanan', [StokBulananController::class, 'getStokPeriodeBulanan']);
+    Route::post('stokbulanan/createPeriodeStokBulanan', [StokBulananController::class, 'storeStokOpnameByPeriodeBulanan']);
+    Route::post('stokbulanan/detailPeriodeStokBulanan', [StokBulananController::class, 'detailSokOpnamePeriodeBulanan']);
 });
 
 Route::post('produk/getProdukByBarcode',[ProdukController::class, 'getProdukByBarcode']);
