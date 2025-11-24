@@ -13,6 +13,7 @@ class Kondisi extends Model
     protected $fillable =
     [
         'kondisi',
+        'jenis',
         'status'
     ];
 }

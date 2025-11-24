@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Produk;
 use App\Models\Kondisi;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Laravel\Prompts\Key;
 
 class KondisiController extends Controller
 {
@@ -24,10 +25,12 @@ class KondisiController extends Controller
 
         $credentials = $request->validate([
             'kondisi'       =>  'required|unique:kondisi',
+            'jenis'         =>  'required'
         ], $messages);
 
         $Kondisi = Kondisi::create([
             'kondisi'       =>  toUpper($request->kondisi),
+            'jenis'         =>  $request->jenis,
             'status'        =>  1,
         ]);
 
@@ -49,7 +52,8 @@ class KondisiController extends Controller
         ];
 
         $credentials = $request->validate([
-            'kondisi'       =>  'required',
+            'kondisi'       => 'required',
+            'jenis'         => 'required'
         ], $messages);
 
         // Cari data kondisi berdasarkan ID
@@ -63,6 +67,7 @@ class KondisiController extends Controller
         // Update data kondisi
         $kondisi->update([
             'kondisi' => toUpper($request->kondisi),
+            'jenis'   => $request->jenis
         ]);
 
         return response()->json(['success' => true, 'message' => 'Kondisi Berhasil Diperbarui.']);
@@ -84,5 +89,29 @@ class KondisiController extends Controller
         ]);
 
         return response()->json(['success' => true, 'message' => 'Kondisi Berhasil Dihapus.']);
+    }
+
+    public function getKondisiByJenisPembelian()
+    {
+        $kondisi = Kondisi::where('jenis','PEMBELIAN')->get();
+
+        if(!$kondisi)
+        {
+            return response()->json(['success'=>false, 'message'=>'Data kondisi tidak ditemukan']);
+        }
+
+        return response()->json(['success'=>true, 'message'=>'Data kondisi berhasil ditemukan', 'data'=>$kondisi]);
+    }
+
+    public function getKondisiByJenisPenjualan()
+    {
+        $kondisi = Kondisi::where('jenis','PENJUALAN')->get();
+
+        if(!$kondisi)
+        {
+            return response()->json(['success'=>false, 'message'=>'Data kondisi tidak ditemukan']);
+        }
+
+        return response()->json(['success'=>true, 'message'=>'Data kondisi berhasil ditemukan', 'data'=>$kondisi]);
     }
 }

@@ -39,7 +39,7 @@ class StokBulananController extends Controller
         $stokNampanBulanan = StokNampanBulanan::create([
             'tanggal'       => $request->tanggal,
             'tanggal_input' => now(),
-            'keterangan'    => $request->keterangan || "Create Stok Opname",
+            'keterangan'    => toUpper($request->keterangan),
             'oleh'          => Auth::user()->id,
             'status'        => 1,
         ]);

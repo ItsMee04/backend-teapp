@@ -46,7 +46,6 @@ class ProdukController extends Controller
             'nama'          =>  'required',
             'jenis'         =>  'required|' . Rule::in(JenisProduk::where('status', 1)->pluck('id')),
             'harga_jual'    =>  'integer',
-            'harga_beli'    =>  'integer',
             'keterangan'    =>  'nullable|string',
             'berat'         =>  [
                 'required',
@@ -98,7 +97,6 @@ class ProdukController extends Controller
             'lingkar'           =>  $request->lingkar??0,
             'panjang'           =>  $request->panjang??0,
             'harga_jual'        =>  $request->hargajual,
-            'harga_beli'        =>  $request->hargabeli,
             'keterangan'        =>  toUpper($request->keterangan),
             'image_produk'      =>  $imageProduk,
             'status'            =>  1,
@@ -128,7 +126,6 @@ class ProdukController extends Controller
             'nama'          =>  'required',
             'jenis'         =>  'required|' . Rule::in(JenisProduk::where('status', 1)->pluck('id')),
             'harga_jual'    =>  'integer',
-            'harga_beli'    =>  'integer',
             'keterangan'    =>  'nullable|string',
             'berat'         =>  [
                 'required',
@@ -163,7 +160,6 @@ class ProdukController extends Controller
                     'lingkar'           =>  $request->lingkar??0,
                     'panjang'           =>  $request->panjang??0,
                     'harga_jual'        =>  $request->hargajual,
-                    'harga_beli'        =>  $request->hargabeli,
                     'keterangan'        =>  toUpper($request->keterangan),
                     'image_produk'      =>  $newImage,
                 ]);
@@ -178,7 +174,6 @@ class ProdukController extends Controller
                     'lingkar'           =>  $request->lingkar,
                     'panjang'           =>  $request->panjang,
                     'harga_jual'        =>  $request->hargajual,
-                    'harga_beli'        =>  $request->hargabeli,
                     'keterangan'        =>  toUpper($request->keterangan),
                 ]);
         }
