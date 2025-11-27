@@ -39,13 +39,10 @@ class PelangganController extends Controller
     {
         $messages = [
             'required'  => ':attribute wajib di isi !!!',
-            'integer'   => ':attribute format wajib menggunakan angka',
             'numeric'   => ':attribute format wajib menggunakan angka',
-            'unique'    => ':attribute sudah digunakan',
         ];
 
         $credentials = $request->validate([
-            'nik'             => 'required|integer|unique:pelanggan,nik',
             'nama'            => 'required',
             'alamat'          => 'required',
             'kontak'          => 'required|numeric',
@@ -56,7 +53,6 @@ class PelangganController extends Controller
 
         $pelanggan = Pelanggan::create([
             'kodepelanggan' =>  $generateCode,
-            'nik'           =>  $request->nik,
             'nama'          =>  toUpper($request->nama),
             'alamat'        =>  toUpper($request->alamat),
             'kontak'        =>  $request->kontak,
@@ -78,8 +74,6 @@ class PelangganController extends Controller
     {
         $messages = [
             'required' => ':attribute wajib diisi !!!',
-            'unique'   => ':attribute sudah digunakan',
-            'integer'  => ':attribute harus berupa angka',
             'numeric'  => ':attribute harus berupa angka'
         ];
 
@@ -90,9 +84,6 @@ class PelangganController extends Controller
             return response()->json(['success' => false, 'message' => 'Pelanggan tidak ditemukan.'], 404);
         }
 
-        // Cek apakah pelanggan sudah memiliki NIK
-        $hasNik = !empty($pelanggan->nik);
-
         // Buat aturan validasi
         $rules = [
             'nama'    => 'required',
@@ -101,24 +92,11 @@ class PelangganController extends Controller
             'tanggal' => 'required',
         ];
 
-        if (!$hasNik) {
-            // Jika belum memiliki NIK
-            $rules['nik'] = 'required|unique:pelanggan,nik|integer';
-        } else {
-            // Jika sudah punya NIK, cek apakah NIK berubah
-            if ($request->nik !== $pelanggan->nik) {
-                $rules['nik'] = 'required|unique:pelanggan,nik|integer';
-            } else {
-                $rules['nik'] = 'required|integer'; // Sama seperti sebelumnya, tanpa validasi unique
-            }
-        }
-
         // Jalankan validasi
         $request->validate($rules, $messages);
 
         // Update data pelanggan
         $pelanggan->update([
-            'nik'     => $request->nik,
             'nama'    => toUpper($request->nama),
             'alamat'  => toUpper($request->alamat),
             'kontak'  => $request->kontak,
