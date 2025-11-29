@@ -18,6 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('suplier_id')->nullable();
             $table->integer('total')->default(0);
             $table->string('terbilang')->nullable();
+            $table->integer('hargatotal')->default(0);
             $table->enum('pembayaran', ['lunas', 'hutang'])->nullable();
             $table->text('keterangan')->nullable();
             $table->unsignedBigInteger('oleh');

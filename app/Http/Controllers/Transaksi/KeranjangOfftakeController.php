@@ -131,10 +131,25 @@ class KeranjangOfftakeController extends Controller
             ->where('status', 1)
             ->get();
 
+        // Total berat (sum dari field berat)
+        $totalBerat = round(
+            $offtake->sum(function ($item) {
+                return (float) $item->berat;
+            }),
+            3 // jumlah digit belakang koma
+        );
+
+        // Total harga (sum dari field total)
+        $totalHarga = $offtake->sum(function ($item) {
+            return (float) $item->total; // total = 1936000
+        });
+
         return response()->json([
             'success' => true,
             'message' => 'Data keranjang offtake berhasil diambil',
-            'data' => $offtake
+            'data' => $offtake,
+            'total_berat' => $totalBerat,
+            'total_harga' => $totalHarga,
         ]);
     }
 
@@ -324,7 +339,8 @@ class KeranjangOfftakeController extends Controller
             ]);
         }
 
-        $totalHarga = $keranjang->sum('total'); // pakai kolom total langsung
+        $total = $keranjang->sum('total');
+        $totalHarga = $request->hargatotal; // pakai kolom total langsung
         $angka = abs($totalHarga);
         $terbilang = ucwords(trim($this->terbilang($angka))) . ' Rupiah';
 
@@ -332,7 +348,8 @@ class KeranjangOfftakeController extends Controller
             ->where('status', 1)
             ->update([
                 "suplier_id"    => $request->suplier,
-                "total"         => $totalHarga,
+                "total"         => $total,
+                "hargatotal"    => $request->hargatotal,
                 "terbilang"     => $terbilang,
                 "pembayaran"    => $request->pembayaran,
                 "keterangan"    => toUpper($request->keterangan),

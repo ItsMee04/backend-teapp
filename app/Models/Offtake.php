@@ -18,6 +18,7 @@ class Offtake extends Model
         'tanggal',
         'suplier_id',
         'total',
+        'hargatotal',
         'pembayaran',
         'keterangan',
         'oleh',
