@@ -201,3 +201,4 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::post('produk/getProdukByBarcode',[ProdukController::class, 'getProdukByBarcode']);
 Route::get('/produk/{id}/cetakbarcodeproduk', [CetakBarcodeProduk::class, 'PrintBarcodeProduk'])->name('produk.cetak_barcode'); // Nama route yang baru
 Route::get('/transaksi/{id}/cetaknotatransaksi', [CetakBarcodeProduk::class, 'PrintNotaTransaksi'])->name('produk.cetak_notatransaksi'); // Nama route yang baru
+Route::post('/compile/nota', [CetakBarcodeProduk::class, 'CompileNotaTransaksi']);

@@ -140,7 +140,11 @@ class TransaksiController extends Controller
             $transaksi->status = 2;
             $transaksi->save();
 
-            return response()->json(['success' => true, 'message' => 'Pembayaran Berhasil Dikonfirmasi']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Pembayaran Berhasil Dikonfirmasi',
+                'transaksi_id' => $transaksi->id // <-- ID Primary Key ditambahkan di sini
+            ]);
         } else {
             // Jika transaksi tidak ditemukan, kembalikan response error
             return response()->json(['success' => false, 'message' => 'Transaksi tidak ditemukan'], 404);
