@@ -165,6 +165,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     //API TRANSAKSI PENJUALAN
     Route::get('transaksi/getTransaksi', [TransaksiController::class, 'getTransaksi']);
     Route::post('transaksi/batalTransaksi',[TransaksiController::class, 'batalTransaksi']);
+    Route::get('/transaksi/{id}/get-signed-url-nota', [CetakBarcodeProduk::class, 'getSignedNotaUrl']);
 
     //API TRANSAKSI PEMBELIAN
     Route::get('pembelian/getPembelian', [PembelianController::class, 'getPembelian']);
@@ -199,3 +200,4 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 Route::post('produk/getProdukByBarcode',[ProdukController::class, 'getProdukByBarcode']);
 Route::get('/produk/{id}/cetakbarcodeproduk', [CetakBarcodeProduk::class, 'PrintBarcodeProduk'])->name('produk.cetak_barcode'); // Nama route yang baru
+Route::get('/transaksi/{id}/cetaknotatransaksi', [CetakBarcodeProduk::class, 'PrintNotaTransaksi'])->name('produk.cetak_notatransaksi'); // Nama route yang baru

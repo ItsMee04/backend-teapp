@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use App\Http\Controllers\Controller;
+use App\Models\Transaksi;
 use PHPJasper\PHPJasper; // Gunakan class ini, bukan yang lain
 
 class CetakBarcodeProduk extends Controller
@@ -77,6 +78,76 @@ class CetakBarcodeProduk extends Controller
             return response()->file($output_pdf_file . '.pdf', $headers);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Gagal membuat laporan: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // Tambahkan fungsi baru ini di Controller Anda
+    public function getSignedNotaUrl(Request $request, $id)
+    {
+        // Gunakan nama route untuk cetak nota transaksi
+        $route_name = 'produk.cetak_notatransaksi';
+        $expiration = now()->addMinutes(5); // URL akan kadaluarsa dalam 5 menit
+
+        $signedUrl = URL::temporarySignedRoute(
+            $route_name,
+            $expiration,
+            ['id' => $id] // Parameter yang dibutuhkan oleh PrintNotaTransaksi
+        );
+
+        return response()->json(['url' => $signedUrl]);
+    }
+
+    public function PrintNotaTransaksi(Request $request, $id)
+    {
+        if (!$request->hasValidSignature()) {
+            abort(401, 'Invalid signature.');
+        }
+
+        $transaksi = Transaksi::find($id);
+
+        if (!$transaksi) {
+            return response()->json(['error' => 'Transaksi tidak ditemukan.'], 404);
+        }
+
+        $jasper_file = resource_path('reports/NOTATRANSAKSI.jrxml');
+
+        $db_connection = config('database.connections.mysql');
+        $database_options = [
+            'driver'    => 'mysql',
+            'host'      => $db_connection['host'],
+            'port'      => $db_connection['port'],
+            'database'  => $db_connection['database'],
+            'username'  => $db_connection['username'],
+            'password'  => $db_connection['password'],
+        ];
+
+        $parameters = [
+            'KODETRANSAKSI_INPUT' => $transaksi->id,
+        ];
+
+        $output_pdf_file = public_path('temp/notatransaksi-' . $transaksi->kodetransaksi);
+
+        $report = new PHPJasper();
+
+        try {
+            $report->process(
+                $jasper_file,
+                $output_pdf_file,
+                [
+                    'format' => ['pdf'],
+                    'params' => $parameters,
+                    'db_connection' => $database_options,
+                ]
+            )->execute();
+
+            $headers = [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="NOTATRANSAKSI-' . $transaksi->kodetransaksi . '.pdf"'
+            ];
+
+            return response()->file($output_pdf_file . '.pdf', $headers);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Gagal membuat nota: ' . $e->getMessage()], 500);
         }
     }
 }
