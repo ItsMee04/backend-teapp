@@ -59,4 +59,10 @@ class KeranjangPembelian extends Model
     {
         return $this->belongsTo(User::class, 'oleh');
     }
+
+    // relasi ke keranjang
+    public function keranjang()
+    {
+        return $this->belongsTo(Keranjang::class, 'produk_id', 'produk_id');
+    }
 }

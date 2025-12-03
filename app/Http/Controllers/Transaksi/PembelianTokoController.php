@@ -19,7 +19,7 @@ class PembelianTokoController extends Controller
 {
     public function getPembelianProduk()
     {
-        $pembelianProduk = KeranjangPembelian::with(['produk.jenisproduk', 'produk', 'kondisi'])
+        $pembelianProduk = KeranjangPembelian::with(['produk.jenisproduk', 'produk',  'keranjang', 'kondisi',])
             ->where('status', 1)
             ->where('oleh', Auth::user()->id)
             ->where('jenis_pembelian', 1)
