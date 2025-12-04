@@ -24,6 +24,7 @@ return new class extends Migration
             $table->unsignedBigInteger('kondisi_id')->nullable();
             $table->unsignedBigInteger('jenisproduk_id')->nullable();
             $table->enum('jenis_pembelian', ['daritoko', 'luartoko']);
+            $table->string('jenis_hargabeli')->nullable();
             $table->unsignedBigInteger('total')->default(0);
             $table->string('terbilang')->nullable();
             $table->text('keterangan')->nullable();

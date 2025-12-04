@@ -85,6 +85,16 @@ class TransaksiController extends Controller
                 // Update produk menjadi tidak aktif (terjual)
                 Produk::where('id', $keranjangItem->produk_id)->update(['status' => 2]);
 
+                // ➕ Tambahkan disini
+                $jumlahTerjual = Keranjang::where('produk_id', $keranjangItem->produk_id)
+                    ->where('status', 2)
+                    ->count();
+
+                if ($jumlahTerjual >= 3) {
+                    Produk::where('id', $keranjangItem->produk_id)
+                        ->update(['kondisi_id' => 4]); // ubah ke kondisi LAMA
+                }
+
                 // Ambil entri nampan_produk asalnya (yang aktif)
                 $nampanProdukAwal = NampanProduk::where('produk_id', $keranjangItem->produk_id)
                     ->where('status', 1)

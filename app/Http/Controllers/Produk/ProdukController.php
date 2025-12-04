@@ -29,9 +29,18 @@ class ProdukController extends Controller
 
     public function getProduk()
     {
-        $produk = Produk::where('status', '!=', 0)->with(['jenisproduk', 'kondisi'])->get();
+        $produk = Produk::where('status', '!=', 0)
+            ->with(['jenisproduk', 'kondisi'])
+            ->withCount(['keranjang as jumlah_terjual' => function ($q) {
+                $q->where('status', 2); // hanya yang benar-benar selesai
+            }])
+            ->get();
 
-        return response()->json(['success' => true, 'message' => 'Data Produk Berhasil Ditemukan', 'Data' => $produk]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Data Produk Berhasil Ditemukan',
+            'Data' => $produk
+        ]);
     }
 
     public function storeProduk(Request $request)
@@ -94,8 +103,8 @@ class ProdukController extends Controller
             'kondisi_id'        =>  $request->kondisi,
             'berat'             =>  $request->berat,
             'karat'             =>  $request->karat,
-            'lingkar'           =>  $request->lingkar??0,
-            'panjang'           =>  $request->panjang??0,
+            'lingkar'           =>  $request->lingkar ?? 0,
+            'panjang'           =>  $request->panjang ?? 0,
             'harga_jual'        =>  $request->hargajual,
             'keterangan'        =>  toUpper($request->keterangan),
             'image_produk'      =>  $imageProduk,
@@ -157,8 +166,8 @@ class ProdukController extends Controller
                     'kondisi_id'        =>  $request->kondisi,
                     'berat'             =>  $request->berat,
                     'karat'             =>  $request->karat,
-                    'lingkar'           =>  $request->lingkar??0,
-                    'panjang'           =>  $request->panjang??0,
+                    'lingkar'           =>  $request->lingkar ?? 0,
+                    'panjang'           =>  $request->panjang ?? 0,
                     'harga_jual'        =>  $request->hargajual,
                     'keterangan'        =>  toUpper($request->keterangan),
                     'image_produk'      =>  $newImage,
@@ -203,7 +212,7 @@ class ProdukController extends Controller
     {
         $kodeproduk = $request->kodeproduk;
 
-        $produk = Produk::with(['jenisProduk','kondisi'])->where('kodeproduk', $kodeproduk)->first();
+        $produk = Produk::with(['jenisProduk', 'kondisi'])->where('kodeproduk', $kodeproduk)->first();
 
         if (!$produk) {
             return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan.']);

@@ -23,6 +23,7 @@ class KeranjangPembelian extends Model
         'kondisi_id',
         'jenisproduk_id',
         'jenis_pembelian',
+        'jenis_hargabeli',
         'total',
         'terbilang',
         'keterangan',

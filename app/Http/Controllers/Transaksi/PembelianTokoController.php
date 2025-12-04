@@ -185,26 +185,17 @@ class PembelianTokoController extends Controller
             $kodePembelian = $activePembelian->kodepembelian;
         }
 
-        // 🔹 Validasi produk di keranjang
-        $existingProductInCart = KeranjangPembelian::where('produk_id', $request->id)
-            ->where('kodetransaksi', $request->kodetransaksi) // cek transaksi asal
-            ->orderByDesc('id')
+        // Cek hanya keranjang aktif pada pembelian sekarang
+        $existingProductInActiveCart = KeranjangPembelian::where('produk_id', $request->id)
+            ->where('kodepembelian', $kodePembelian) // transaksi pembelian SEKARANG
+            ->where('status', 1)
             ->first();
 
-        if ($existingProductInCart) {
-            if ($existingProductInCart->status == 1) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Produk ini sudah ada di keranjang aktif untuk transaksi ini.'
-                ]);
-            }
-
-            if ($existingProductInCart->status == 2) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Produk ini sudah masuk transaksi pembelian untuk transaksi ini dan tidak bisa dipilih lagi.'
-                ]);
-            }
+        if ($existingProductInActiveCart) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Produk ini sudah ada di keranjang aktif untuk transaksi pembelian ini.'
+            ]);
         }
 
 
@@ -254,6 +245,7 @@ class PembelianTokoController extends Controller
         // Update data pembelian produk sekaligus subtotalharga
         $produk->update([
             'harga_beli'     => $request->hargabeli,
+            'jenis_hargabeli' => $request->jenis_hargabeli,
             'kondisi_id'     => $request->kondisi,
             'berat'          => $request->berat,
             'total'          => $subtotalHargaBaru,
@@ -344,17 +336,18 @@ class PembelianTokoController extends Controller
             ->update(['status' => 2]);
 
         $kodeperbaikan = (new PerbaikanController)->kodePerbaikan();
-        // Insert ke perbaikan jika kondisi_id 2 atau 3
+        // Insert ke perbaikan jika kondisi_id 1
         foreach ($keranjang as $item) {
-            if (in_array($item->kondisi_id, [2, 3])) {
+            // Jika kondisi 1 → masuk proses pencucian
+            if ($item->kondisi_id == 1) {
                 Perbaikan::create([
                     'kodeperbaikan' => $kodeperbaikan,
                     'produk_id'     => $item->produk_id,
                     'kondisi_id'    => $item->kondisi_id,
                     'tanggalmasuk'  => Carbon::now(),
-                    'status'        => 1, // bisa disesuaikan
+                    'status'        => 1,
                     'oleh'          => Auth::id(),
-                    'keterangan'    => 'Produk masuk perbaikan', // opsional
+                    'keterangan'    => 'Produk masuk pencucian',
                 ]);
             }
         }
