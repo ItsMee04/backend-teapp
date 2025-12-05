@@ -31,6 +31,9 @@ class CetakBarcodeProduk extends Controller
 
     public function PrintBarcodeProduk(Request $request, $id)
     {
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
+
         if (!$request->hasValidSignature()) {
             abort(401, 'Invalid signature.');
         }
@@ -43,43 +46,54 @@ class CetakBarcodeProduk extends Controller
 
         $jasper_file = resource_path('reports/CetakBarcodeProduk.jasper');
 
-        $db_connection = config('database.connections.mysql');
-        $database_options = [
-            'driver'    => 'mysql',
-            'host'      => $db_connection['host'],
-            'port'      => $db_connection['port'],
-            'database'  => $db_connection['database'],
-            'username'  => $db_connection['username'],
-            'password'  => $db_connection['password'],
-        ];
+        $db = config('database.connections.mysql');
 
         $parameters = [
             'ProdukID' => $produk->id,
         ];
 
-        $output_pdf_file = public_path('temp/barcode-' . $produk->id);
-
-        $report = new PHPJasper();
-
         try {
-            $report->process(
+            // ❗ Simpan file PDF SEMENTARA di storage/temp
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) mkdir($tempDir, 0777, true);
+
+            $outputFile = $tempDir . '/barcode-' . $produk->id;
+
+            $jasper = new \PHPJasper\PHPJasper;
+            $jasper->process(
                 $jasper_file,
-                $output_pdf_file,
+                $outputFile,
                 [
                     'format' => ['pdf'],
                     'params' => $parameters,
-                    'db_connection' => $database_options,
+                    'db_connection' => [
+                        'driver'   => 'mysql',
+                        'host'     => $db['host'],
+                        'port'     => $db['port'],
+                        'database' => $db['database'],
+                        'username' => $db['username'],
+                        'password' => $db['password'],
+                    ],
                 ]
             )->execute();
 
-            $headers = [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="barcode-' . $produk->id . '.pdf"'
-            ];
+            $pdfPath = $outputFile . '.pdf';
 
-            return response()->file($output_pdf_file . '.pdf', $headers);
+            // ❗ Baca isi PDF
+            $pdfContent = file_get_contents($pdfPath);
+
+            // ❗ Hapus file setelah selesai digunakan
+            unlink($pdfPath);
+
+            // ❗ Kirim PDF langsung ke browser (inline)
+            return response($pdfContent, 200, [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="BARCODE-' . $produk->id . '.pdf"',
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Gagal membuat laporan: ' . $e->getMessage()], 500);
+            return response()->json([
+                'error' => 'Gagal membuat laporan: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -101,9 +115,8 @@ class CetakBarcodeProduk extends Controller
 
     public function PrintNotaTransaksi(Request $request, $id)
     {
-        // 🚨 SOLUSI 1: TAMBAHKAN ANTI-HANG DI AWAL FUNGSI
-        set_time_limit(300); // Batas waktu 5 menit
-        ini_set('memory_limit', '512M'); // Tingkatkan batas memori
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
 
         if (!$request->hasValidSignature()) {
             abort(401, 'Invalid signature.');
@@ -115,55 +128,58 @@ class CetakBarcodeProduk extends Controller
             return response()->json(['error' => 'Transaksi tidak ditemukan.'], 404);
         }
 
-        // 🚨 SOLUSI 2: PASTIKAN MENGGUNAKAN FILE .JASPER YANG SUDAH DIKOMPILASI MANUAL
         $jasper_file = resource_path('reports/CetakNotaTransaksi.jasper');
 
-        // 🚨 SOLUSI 3: LOGO DIJADIKAN PATH ABSOLUT, BUKAN URL HTTP 127.0.0.1:8000
         $logo_path = public_path('assets/logo.jpg');
-        // Catatan: Pastikan $F{image_produk} (gambar produk) juga diubah di JRXML Anda
-        // agar tidak memanggil URL http://127.0.0.1:8000/...
         $product_path = public_path('storage/produk/');
         $ttd_path = public_path('ttd/');
 
-        $db_connection = config('database.connections.mysql');
-        $database_options = [
-            'driver' => 'mysql',
-            'host' => $db_connection['host'],
-            'port' => $db_connection['port'],
-            'database' => $db_connection['database'],
-            'username' => $db_connection['username'],
-            'password' => $db_connection['password'],
-        ];
+        $db = config('database.connections.mysql');
 
         $parameters = [
-            // Pastikan Anda telah membuat parameter 'LOGO' bertipe java.lang.String di JRXML
-            'LOGO'      => $logo_path,
-            'PRODUK'    => $product_path,
-            'TTD'       => $ttd_path,
+            'LOGO' => $logo_path,
+            'PRODUK' => $product_path,
+            'TTD' => $ttd_path,
             'KODETRANSAKSI_INPUT' => $transaksi->id,
         ];
 
-        $output_pdf_file = public_path('temp/notatransaksi-' . $transaksi->kodetransaksi);
-
-        $report = new PHPJasper();
-
         try {
-            $report->process(
+            // ❗ Simpan ke folder temp Laravel (AMAN)
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) mkdir($tempDir, 0777, true);
+
+            $outputFile = $tempDir . '/nota-' . $transaksi->kodetransaksi;
+
+            $jasper = new \PHPJasper\PHPJasper;
+            $jasper->process(
                 $jasper_file,
-                $output_pdf_file,
+                $outputFile,
                 [
                     'format' => ['pdf'],
                     'params' => $parameters,
-                    'db_connection' => $database_options,
+                    'db_connection' => [
+                        'driver' => 'mysql',
+                        'host' => $db['host'],
+                        'port' => $db['port'],
+                        'database' => $db['database'],
+                        'username' => $db['username'],
+                        'password' => $db['password'],
+                    ],
                 ]
             )->execute();
 
-            $headers = [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="NOTATRANSAKSI-' . $transaksi->kodetransaksi . '.pdf"'
-            ];
+            $pdfPath = $outputFile . '.pdf';
 
-            return response()->file($output_pdf_file . '.pdf', $headers);
+            // ❗ Baca isi PDF
+            $pdfContent = file_get_contents($pdfPath);
+
+            // ❗ Hapus file setelah dibaca
+            unlink($pdfPath);
+
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="NOTA-' . $transaksi->kodetransaksi . '.pdf"',
+            ]);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Gagal membuat nota: ' . $e->getMessage()], 500);
         }
@@ -187,9 +203,8 @@ class CetakBarcodeProduk extends Controller
 
     public function PrintNotaPembelian(Request $request, $id)
     {
-        // 🚨 SOLUSI 1: TAMBAHKAN ANTI-HANG DI AWAL FUNGSI
-        set_time_limit(300); // Batas waktu 5 menit
-        ini_set('memory_limit', '512M'); // Tingkatkan batas memori
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
 
         if (!$request->hasValidSignature()) {
             abort(401, 'Invalid signature.');
@@ -201,55 +216,58 @@ class CetakBarcodeProduk extends Controller
             return response()->json(['error' => 'Transaksi tidak ditemukan.'], 404);
         }
 
-        // 🚨 SOLUSI 2: PASTIKAN MENGGUNAKAN FILE .JASPER YANG SUDAH DIKOMPILASI MANUAL
         $jasper_file = resource_path('reports/CetakNotaPembelian.jasper');
 
-        // 🚨 SOLUSI 3: LOGO DIJADIKAN PATH ABSOLUT, BUKAN URL HTTP 127.0.0.1:8000
         $logo_path = public_path('assets/logo.jpg');
-        // Catatan: Pastikan $F{image_produk} (gambar produk) juga diubah di JRXML Anda
-        // agar tidak memanggil URL http://127.0.0.1:8000/...
         $product_path = public_path('storage/produk/');
         $ttd_path = public_path('ttd/');
 
-        $db_connection = config('database.connections.mysql');
-        $database_options = [
-            'driver' => 'mysql',
-            'host' => $db_connection['host'],
-            'port' => $db_connection['port'],
-            'database' => $db_connection['database'],
-            'username' => $db_connection['username'],
-            'password' => $db_connection['password'],
-        ];
+        $db = config('database.connections.mysql');
 
         $parameters = [
-            // Pastikan Anda telah membuat parameter 'LOGO' bertipe java.lang.String di JRXML
-            'LOGO'      => $logo_path,
-            'PRODUK'    => $product_path,
-            'TTD'       => $ttd_path,
+            'LOGO' => $logo_path,
+            'PRODUK' => $product_path,
+            'TTD' => $ttd_path,
             'KODEPEMBELIAN_INPUT' => $transaksi->id,
         ];
 
-        $output_pdf_file = public_path('temp/notapembelian-' . $transaksi->kodepembelian);
-
-        $report = new PHPJasper();
-
         try {
-            $report->process(
+            // ❗ Simpan ke folder temp Laravel (AMAN)
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) mkdir($tempDir, 0777, true);
+
+            $outputFile = $tempDir . '/nota-' . $transaksi->kodepembelian;
+
+            $jasper = new \PHPJasper\PHPJasper;
+            $jasper->process(
                 $jasper_file,
-                $output_pdf_file,
+                $outputFile,
                 [
                     'format' => ['pdf'],
                     'params' => $parameters,
-                    'db_connection' => $database_options,
+                    'db_connection' => [
+                        'driver' => 'mysql',
+                        'host' => $db['host'],
+                        'port' => $db['port'],
+                        'database' => $db['database'],
+                        'username' => $db['username'],
+                        'password' => $db['password'],
+                    ],
                 ]
             )->execute();
 
-            $headers = [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="NOTATRANSAKSI-' . $transaksi->kodepembelian . '.pdf"'
-            ];
+            $pdfPath = $outputFile . '.pdf';
 
-            return response()->file($output_pdf_file . '.pdf', $headers);
+            // ❗ Baca isi PDF
+            $pdfContent = file_get_contents($pdfPath);
+
+            // ❗ Hapus file setelah dibaca
+            unlink($pdfPath);
+
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="NOTA-' . $transaksi->kodepembelian . '.pdf"',
+            ]);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Gagal membuat nota: ' . $e->getMessage()], 500);
         }
@@ -278,7 +296,6 @@ class CetakBarcodeProduk extends Controller
                 'message' => 'Kompilasi CetakNotaPembelian.jrxml berhasil!',
                 'output_file' => $output_dir . '/CetakNotaPembelian.jasper'
             ]);
-
         } catch (\Exception $e) {
             // Jika ini gagal, cek kembali JRXML Anda di Jaspersoft Studio!
             return response()->json(['error' => 'Gagal Kompilasi (Error Java/XML): ' . $e->getMessage()], 500);
