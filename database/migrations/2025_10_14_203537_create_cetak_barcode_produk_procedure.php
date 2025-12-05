@@ -13,6 +13,10 @@ return new class extends Migration
     public function up(): void
     {
         DB::unprepared("
+            DROP PROCEDURE IF EXISTS CetakBarcodeProduk;
+        ");
+
+        DB::unprepared("
             CREATE PROCEDURE CetakBarcodeProduk(IN produkId INT)
             BEGIN
                 SELECT

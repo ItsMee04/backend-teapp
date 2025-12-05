@@ -14,6 +14,9 @@ return new class extends Migration
     {
         DB::unprepared("
             DROP PROCEDURE IF EXISTS CetakNotaTransaksi;
+        ");
+
+        DB::unprepared("
             CREATE PROCEDURE CetakNotaTransaksi(IN KODETRANSAKSI_INPUT INT)
             BEGIN
                 SELECT
