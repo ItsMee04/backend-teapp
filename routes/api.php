@@ -170,6 +170,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     //API TRANSAKSI PEMBELIAN
     Route::get('pembelian/getPembelian', [PembelianController::class, 'getPembelian']);
     Route::post('pembelian/batalTransaksi',[PembelianController::class, 'batalTransaksi']);
+    Route::get('/pembelian/{id}/get-signed-url-nota', [CetakBarcodeProduk::class, 'getSignedNotaPembelianUrl']);
 
     //API PERBAIKAN
     Route::get('perbaikan/kodePerbaikan', [PerbaikanController::class, 'kodePerbaikan']);
@@ -201,4 +202,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::post('produk/getProdukByBarcode',[ProdukController::class, 'getProdukByBarcode']);
 Route::get('/produk/{id}/cetakbarcodeproduk', [CetakBarcodeProduk::class, 'PrintBarcodeProduk'])->name('produk.cetak_barcode'); // Nama route yang baru
 Route::get('/transaksi/{id}/cetaknotatransaksi', [CetakBarcodeProduk::class, 'PrintNotaTransaksi'])->name('produk.cetak_notatransaksi'); // Nama route yang baru
-Route::post('/compile/nota', [CetakBarcodeProduk::class, 'CompileNotaTransaksi']);
+Route::get('/pembelian/{id}/cetaknotapembelian', [CetakBarcodeProduk::class, 'PrintNotaPembelian'])->name('produk.cetak_notapembelian'); // Nama route yang baru
+Route::post('/compile/reports', [CetakBarcodeProduk::class, 'CompileReports']);
