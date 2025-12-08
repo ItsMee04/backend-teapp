@@ -144,12 +144,15 @@ class KeranjangOfftakeController extends Controller
             return (float) $item->total; // total = 1936000
         });
 
+        $totalPotong = $offtake->count();
+
         return response()->json([
             'success' => true,
             'message' => 'Data keranjang offtake berhasil diambil',
             'data' => $offtake,
             'total_berat' => $totalBerat,
             'total_harga' => $totalHarga,
+            'total_potong' => $totalPotong
         ]);
     }
 
