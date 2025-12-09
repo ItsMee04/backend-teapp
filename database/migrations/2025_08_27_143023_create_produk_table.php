@@ -24,7 +24,7 @@ return new class extends Migration
             $table->integer('panjang')->default(0);
             $table->text('keterangan')->nullable();
             $table->unsignedBigInteger('kondisi_id');
-            $table->string('image_produk', 100)->nullable()->default('notfound.png');
+            $table->string('image_produk', 100)->nullable();
             $table->integer('status');
             $table->timestamps();
 

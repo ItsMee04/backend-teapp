@@ -59,42 +59,39 @@ class PembelianLuarTokoController extends Controller
 
     public function storeProduk(Request $request)
     {
+        // 1. Validasi Input
         $request->validate([
-            'jenis'          => 'required|exists:jenis_produk,id',
-            'nama'           => 'required|string',
-            'hargabeli'      => 'required|numeric',
-            'berat'          => 'required|numeric',
-            'karat'          => 'nullable|string',
-            'lingkar'        => 'nullable|string',
-            'panjang'        => 'nullable|string',
-            'keterangan'     => 'nullable|string',
-            'kondisi'        => 'required|exists:kondisi,id',
+            'jenis'             => 'required|exists:jenis_produk,id',
+            'nama'              => 'required|string',
+            'hargabeli'         => 'required|numeric',
+            'berat'             => 'required|numeric',
+            'karat'             => 'nullable|string',
+            'lingkar'           => 'nullable|string',
+            'panjang'           => 'nullable|string',
+            'keterangan'        => 'nullable|string',
+            'kondisi'           => 'required|exists:kondisi,id',
         ]);
 
         return DB::transaction(function () use ($request) {
-            // 1. Generate kode produk baru
+            $keranjang = null;
+            $activePembelian = null;
+            $perbaikan = null;
+            $message = '';
+
+            // --- Langkah A: Pembuatan Produk Master & Barcode (Wajib untuk semua kondisi) ---
+
+            // A.1 Generate kode produk baru & Barcode
             $produkController = new ProdukController();
             $kodeProduk = $produkController->generateKodeProduk();
 
-            /**
-             * Generate BARCODE (Code128) pakai milon/barcode
-             */
             $barcodeGenerator = new DNS1D();
             $barcodeGenerator->setStorPath(storage_path('app/public/barcode/'));
-
-            // hasil barcode berupa base64 string
             $barcodeBase64 = $barcodeGenerator->getBarcodePNG($kodeProduk, 'C128');
-
-            // ubah base64 ke binary PNG
             $barcodeImage = base64_decode($barcodeBase64);
-
-            // nama file barcode
-            $barcodeFileName = 'barcode/' . $kodeProduk . '.png';
-
-            // simpan ke storage/app/public/barcode/
+            $barcodeFileName = 'barcode/' . $kodeProduk . '.jpg';
             Storage::disk('public')->put($barcodeFileName, $barcodeImage);
 
-            // 2. Simpan ke master produk (status = 0)
+            // A.2 Simpan ke master produk (Status = 0: belum aktif)
             $produk = Produk::create([
                 'kodeproduk'    => $kodeProduk,
                 'jenisproduk_id' => $request->jenis,
@@ -102,14 +99,15 @@ class PembelianLuarTokoController extends Controller
                 'harga_beli'    => $request->hargabeli,
                 'berat'         => $request->berat,
                 'karat'         => $request->karat,
-                'lingkar'       => $request->lingkar??0,
-                'panjang'       => $request->panjang??0,
+                'lingkar'       => $request->lingkar ?? 0,
+                'panjang'       => $request->panjang ?? 0,
                 'keterangan'    => toUpper($request->keterangan),
                 'kondisi_id'    => $request->kondisi,
-                'status'        => 0, // produk baru dari luar toko = belum aktif
+                'status'        => 0,
             ]);
 
-            // 3. Cari transaksi pembelian aktif (status = 1) untuk user ini
+            // --- LOGIKA KERANJANG PEMBELIAN (Diambil dari Kondisi 1, dijadikan reusable) ---
+            // Cari transaksi pembelian aktif (status = 1) untuk user ini
             $activePembelian = KeranjangPembelian::where('oleh', Auth::user()->id)
                 ->where('status', 1)
                 ->where('jenis_pembelian', 'luartoko')
@@ -118,7 +116,7 @@ class PembelianLuarTokoController extends Controller
             $kodePembelian = null;
 
             if (!$activePembelian) {
-                // kalau belum ada transaksi → buat baru
+                // Jika belum ada transaksi aktif → buat baru
                 $PembelianTokoController = new PembelianTokoController();
                 $kodePembelian = $PembelianTokoController->generateKodePembelian();
 
@@ -132,12 +130,11 @@ class PembelianLuarTokoController extends Controller
                 $kodePembelian = $activePembelian->kodepembelian;
             }
 
-            $berat = $produk->berat;
-            $harga = $produk->harga_beli;
-            $total = $berat * $harga;
-
+            // Hitung total dan terbilang
+            $total = $produk->berat * $produk->harga_beli;
             $terbilang = ucwords($this->terbilang($total)) . ' Rupiah';
-            // 4. Simpan ke keranjang pembelian
+
+            // Simpan ke keranjang pembelian (SAMA UNTUK KONDISI 1 & 2)
             $keranjang = KeranjangPembelian::create([
                 'kodepembelian'     => $kodePembelian,
                 'produk_id'         => $produk->id,
@@ -147,8 +144,8 @@ class PembelianLuarTokoController extends Controller
                 'harga_beli'        => $produk->harga_beli,
                 'berat'             => $produk->berat,
                 'karat'             => $produk->karat,
-                'lingkar'           => $produk->lingkar??0,
-                'panjang'           => $produk->panjang??0,
+                'lingkar'           => $produk->lingkar ?? 0,
+                'panjang'           => $produk->panjang ?? 0,
                 'total'             => $total,
                 'terbilang'         => $terbilang,
                 'keterangan'        => $produk->keterangan,
@@ -156,29 +153,55 @@ class PembelianLuarTokoController extends Controller
                 'status'            => 1, // aktif di keranjang
                 'jenis_pembelian'   => 'luartoko',
             ]);
+            // --- END LOGIKA KERANJANG PEMBELIAN ---
 
-            // 5. Jika kondisi ≠ 1 → masuk ke perbaikan
-            if ($request->kondisi != 1) {
+
+            // --- Langkah B: Distribusi Aksi Berdasarkan Kondisi (Memproses Perbaikan/Pencucian) ---
+
+            if ($request->kondisi == 1) {
+                // B.1 KONDISI 1 (Baik): Masuk ke Perbaikan (Pencucian)
 
                 $perbaikanController = new PerbaikanController();
                 $kodePerbaikan = $perbaikanController->kodePerbaikan();
-                Perbaikan::create([
+
+                $perbaikan = Perbaikan::create([
                     'kodeperbaikan' => $kodePerbaikan,
-                    'produk_id'   => $produk->id,
+                    'produk_id'     => $produk->id,
                     'tanggalmasuk'  => Carbon::now(),
-                    'kondisi_id'  => $produk->kondisi_id,
-                    'keterangan'  => 'Produk dari luar toko kondisi tidak baik',
-                    'status'      => 1, // aktif di perbaikan
-                    'oleh'        => Auth::user()->id,
+                    'kondisi_id'    => $produk->kondisi_id,
+                    'keterangan'    => 'Produk masuk pencucian',
+                    'status'        => 1, // aktif di perbaikan (sedang diproses)
+                    'oleh'          => Auth::user()->id,
                 ]);
+                $message = 'Produk kondisi baik ditambahkan ke master, keranjang, dan masuk pencucian.';
+            } elseif ($request->kondisi == 2) {
+                // B.2 KONDISI 2 (Rusak/Lebur): Masuk ke Perbaikan (Status 2)
+
+                $perbaikanController = new PerbaikanController();
+                $kodePerbaikan = $perbaikanController->kodePerbaikan();
+
+                $perbaikan = Perbaikan::create([
+                    'kodeperbaikan' => $kodePerbaikan,
+                    'produk_id'     => $produk->id,
+                    'tanggalmasuk'  => Carbon::now(),
+                    'kondisi_id'    => $produk->kondisi_id,
+                    'keterangan'    => 'Produk di lebur', // Diubah menjadi 'Produk di lebur'
+                    'status'        => 2, // Diubah menjadi status 2 (Dilebur/Selesai)
+                    'oleh'          => Auth::user()->id,
+                    'tanggalkeluar' => Carbon::now(), // Langsung keluar karena sudah dilebur
+                ]);
+                $message = 'Produk kondisi rusak berhasil ditambahkan ke master, keranjang, dan langsung dilebur (Perbaikan Status 2).';
             }
+
+            // --- Langkah C: Response ---
 
             return response()->json([
                 'success'   => true,
-                'message'   => 'Produk luar toko berhasil ditambahkan ke master & keranjang',
+                'message'   => $message,
                 'produk'    => $produk,
                 'keranjang' => $keranjang,
                 'pembelian' => $activePembelian,
+                'perbaikan' => $perbaikan,
             ]);
         });
     }
@@ -202,7 +225,7 @@ class PembelianLuarTokoController extends Controller
             $keranjang = KeranjangPembelian::where('id', $id)
                 ->where('status', 1)
                 ->where('oleh', Auth::id())
-                ->where('jenis_pembelian', 2) // luar toko
+                ->where('jenis_pembelian', 'luartoko')
                 ->first();
 
             if (!$keranjang) {
@@ -221,71 +244,104 @@ class PembelianLuarTokoController extends Controller
                 ], 404);
             }
 
-            // Simpan kondisi baru dulu ke produk
+            $kondisiBaru = $request->kondisi;
+
+            // Simpan kondisi baru dan data lainnya ke master produk
             $produk->update([
                 'jenisproduk_id' => $request->jenis,
                 'nama'           => toUpper($request->nama),
                 'harga_beli'     => $request->hargabeli,
                 'berat'          => $request->berat,
                 'karat'          => $request->karat,
-                'lingkar'        => $request->lingkar??0,
-                'panjang'        => $request->panjang??0,
+                'lingkar'        => $request->lingkar ?? 0,
+                'panjang'        => $request->panjang ?? 0,
                 'keterangan'     => toUpper($request->keterangan),
-                'kondisi_id'     => $request->kondisi,
+                'kondisi_id'     => $kondisiBaru, // Update kondisi produk master
             ]);
 
-            // ----- LOGIKA PERBAIKAN -----
-            // Cek kondisi baru
-            $kondisiBaru = $request->kondisi;
+            // ----- LOGIKA PERBAIKAN DINAMIS -----
 
-            // Cari record perbaikan dengan produk_id ini yang masih aktif (status = 1)
+            // Cari record perbaikan yang masih aktif (status = 1) untuk produk ini
             $perbaikan = Perbaikan::where('produk_id', $produk->id)
                 ->where('status', 1)
                 ->first();
 
-            if (in_array($kondisiBaru, [2, 3])) {
-                // kalau kondisi baru 2 atau 3
+            // Kasus 1: Kondisi menjadi rusak/perlu perbaikan (bukan 1)
+            if ($kondisiBaru != 1) {
+
                 if ($perbaikan) {
-                    // sudah ada perbaikan yg aktif, update tanggalmasuk jika ingin diperbaharui
-                    // misal kalau kondisi berubah dari 2 ke 3 atau tetap 2 tapi ingin reset tanggal masuk
-                    $perbaikan->update([
-                        'tanggalmasuk' => Carbon::now(),
-                        'kondisi_id'    => $kondisiBaru,
-                        'keterangan'    => $request->keterangan ?? $perbaikan->keterangan,
-                        // bisa update field lain kalau perlu
-                    ]);
+                    // Perbaikan sudah aktif: Update jika ada perubahan kondisi
+                    if ($perbaikan->kondisi_id != $kondisiBaru) {
+                        $perbaikan->update([
+                            'kondisi_id'  => $kondisiBaru,
+                            'keterangan'  => $request->keterangan ?? 'Perubahan kondisi saat update produk',
+                        ]);
+                    }
+
+                    // LOGIKA KHUSUS PELEBURAN (Kondisi 2)
+                    if ($kondisiBaru == 2) {
+                        $perbaikan->update([
+                            'kondisi_id'    => 2,
+                            'keterangan'    => 'Produk dilebur',
+                            'status'        => 2, // Asumsi: Status 2 = Selesai / Dilebur (Non-Aktif)
+                            'tanggalkeluar' => Carbon::now(),
+                        ]);
+                    }
                 } else {
-                    // belum ada perbaikan yg aktif, buat baru
-                    // misal kode perbaikan otomatis dibuat dengan fungsi tertentu
-                    $kodePerbaikan = $this->generateKodePerbaikan();
-                    Perbaikan::create([
+                    // Belum ada perbaikan aktif: Buat record perbaikan baru
+                    $perbaikanController = new PerbaikanController();
+                    $kodePerbaikan = $perbaikanController->kodePerbaikan();
+
+                    $keteranganPerbaikan = ($kondisiBaru == 2) ? 'Produk dari luar toko, langsung dilebur' : ($request->keterangan ?? 'Produk dari luar toko kondisi tidak baik');
+                    $statusPerbaikan = ($kondisiBaru == 2) ? 2 : 1;
+
+                    $perbaikan = Perbaikan::create([
                         'kodeperbaikan' => $kodePerbaikan,
                         'produk_id'     => $produk->id,
                         'tanggalmasuk'  => Carbon::now(),
                         'kondisi_id'    => $kondisiBaru,
-                        'keterangan'    => $request->keterangan ?? 'Produk dari luar toko kondisi tidak baik',
-                        'status'        => 1, // perbaikan aktif
+                        'keterangan'    => $keteranganPerbaikan,
+                        'status'        => $statusPerbaikan,
                         'oleh'          => Auth::user()->id,
+                        'tanggalkeluar' => ($statusPerbaikan == 2) ? Carbon::now() : null,
                     ]);
                 }
             } else if ($kondisiBaru == 1) {
-                // kondisi jadi baik (1), berarti keluar dari perbaikan
+                // Kasus 2: Kondisi menjadi BAIK (1) → Masuk ke tahap Pencucian/QC (di dalam Perbaikan)
+
                 if ($perbaikan) {
-                    // ubah status perbaikan menjadi 0 (non aktif)
+                    // Perbaikan sudah aktif: Update record yang sudah ada
                     $perbaikan->update([
-                        'status' => 0
+                        'status'        => 1, // Diubah menjadi AKTIF
+                        'kondisi_id'    => $kondisiBaru, // Diubah menjadi 1
+                        'keterangan'    => 'Produk masuk pencucian',
+                        'tanggalmasuk'  => Carbon::now(), // Reset tanggal masuk
+                        'tanggalkeluar' => null, // Pastikan tanggal keluar null
+                    ]);
+                } else {
+                    // Belum ada perbaikan aktif: Buat record perbaikan baru
+                    $perbaikanController = new PerbaikanController();
+                    $kodePerbaikan = $perbaikanController->kodePerbaikan();
+
+                    $perbaikan = Perbaikan::create([
+                        'kodeperbaikan' => $kodePerbaikan,
+                        'produk_id'     => $produk->id,
+                        'tanggalmasuk'  => Carbon::now(),
+                        'kondisi_id'    => $kondisiBaru, // Yaitu Kondisi 1
+                        'keterangan'    => 'Produk masuk pencucian',
+                        'status'        => 1, // Aktif
+                        'oleh'          => Auth::user()->id,
+                        'tanggalkeluar' => null,
                     ]);
                 }
             }
-            // ----- END LOGIKA PERBAIKAN -----
+            // ----- END LOGIKA PERBAIKAN DINAMIS -----
 
             // Hitung ulang total & terbilang
-            $berat = $request->berat;
-            $harga = $request->hargabeli;
-            $total = $berat * $harga;
+            $total = $request->berat * $request->hargabeli;
             $terbilang = ucwords($this->terbilang($total)) . ' Rupiah';
 
-            // Update data keranjang pembelian
+            // Update data keranjang pembelian (disinkronkan dengan input baru)
             $keranjang->update([
                 'kondisi_id'     => $request->kondisi,
                 'jenisproduk_id' => $request->jenis,
@@ -293,8 +349,8 @@ class PembelianLuarTokoController extends Controller
                 'harga_beli'     => $request->hargabeli,
                 'berat'          => $request->berat,
                 'karat'          => $request->karat,
-                'lingkar'        => $request->lingkar??0,
-                'panjang'        => $request->panjang??0,
+                'lingkar'        => $request->lingkar ?? 0,
+                'panjang'        => $request->panjang ?? 0,
                 'total'          => $total,
                 'terbilang'      => $terbilang,
                 'keterangan'     => toUpper($request->keterangan),
@@ -302,7 +358,7 @@ class PembelianLuarTokoController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Data keranjang pembelian berhasil diupdate',
+                'message' => 'Data keranjang pembelian berhasil diupdate, dan status perbaikan disesuaikan.',
                 'data'    => $keranjang
             ]);
         });
