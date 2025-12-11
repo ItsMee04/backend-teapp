@@ -10,7 +10,9 @@ class OfftakeController extends Controller
 {
     public function getTransaksiOfftake()
     {
-        $transaksi = Offtake::with(['keranjangOfftake', 'keranjangOfftake.produk', 'suplier', 'user.pegawai'])->get();
+        $transaksi = Offtake::with(['keranjangOfftake', 'keranjangOfftake.produk', 'suplier', 'user.pegawai'])
+            ->whereIn('status', [1, 2])
+            ->get();
 
         return response()->json([
             'success'   => true,

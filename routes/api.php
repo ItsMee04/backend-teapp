@@ -185,6 +185,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('keranjangOfftake/deleteProduk/{id}', [KeranjangOfftakeController::class, 'deleteProduk']);
     Route::post('keranjangOfftake/submitTransaksiOfftake', [KeranjangOfftakeController::class, 'submitTransaksi']);
     Route::get('offtake/getTransaksiOfftake',[OfftakeController::class, 'getTransaksiOfftake']);
+    Route::get('/offtake/{id}/get-signed-url-nota', [CetakBarcodeProduk::class, 'getSignedNotaOfftakeUrl']);
 
     //API STOK
     Route::get('stokharian/getPeriodeStok', [StokHarianController::class, 'getPeriodeStok']);;
@@ -203,4 +204,5 @@ Route::post('produk/getProdukByBarcode',[ProdukController::class, 'getProdukByBa
 Route::get('/produk/{id}/cetakbarcodeproduk', [CetakBarcodeProduk::class, 'PrintBarcodeProduk'])->name('produk.cetak_barcode'); // Nama route yang baru
 Route::get('/transaksi/{id}/cetaknotatransaksi', [CetakBarcodeProduk::class, 'PrintNotaTransaksi'])->name('produk.cetak_notatransaksi'); // Nama route yang baru
 Route::get('/pembelian/{id}/cetaknotapembelian', [CetakBarcodeProduk::class, 'PrintNotaPembelian'])->name('produk.cetak_notapembelian'); // Nama route yang baru
+Route::get('/offtake/{id}/cetaknotaofftake', [CetakBarcodeProduk::class, 'PrintNotaOfftake'])->name('produk.cetak_notaofftake'); // Nama route yang baru
 Route::post('/compile/reports', [CetakBarcodeProduk::class, 'CompileReports']);

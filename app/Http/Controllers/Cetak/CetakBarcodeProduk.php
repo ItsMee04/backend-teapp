@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use App\Http\Controllers\Controller;
+use App\Models\Offtake;
 use PHPJasper\PHPJasper; // Gunakan class ini, bukan yang lain
 
 class CetakBarcodeProduk extends Controller
@@ -273,10 +274,98 @@ class CetakBarcodeProduk extends Controller
         }
     }
 
+    // Tambahkan fungsi baru ini di Controller Anda
+    public function getSignedNotaOfftakeUrl(Request $request, $id)
+    {
+        // Gunakan nama route untuk cetak nota offtake
+        $route_name = 'produk.cetak_notaofftake';
+        $expiration = now()->addMinutes(5); // URL akan kadaluarsa dalam 5 menit
+
+        $signedUrl = URL::temporarySignedRoute(
+            $route_name,
+            $expiration,
+            ['id' => $id] // Parameter yang dibutuhkan oleh PrintNotaOfftake
+        );
+
+        return response()->json(['url' => $signedUrl]);
+    }
+
+    public function PrintNotaOfftake(Request $request, $id)
+    {
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
+
+        if (!$request->hasValidSignature()) {
+            abort(401, 'Invalid signature.');
+        }
+
+        $transaksi = Offtake::find($id);
+
+        if (!$transaksi) {
+            return response()->json(['error' => 'Transaksi tidak ditemukan.'], 404);
+        }
+
+        $jasper_file = resource_path('reports/CetakNotaOfftake.jasper');
+
+        $logo_path = public_path('assets/logo.jpg');
+        $product_path = public_path('storage/produk/');
+        $ttd_path = public_path('ttd/');
+
+        $db = config('database.connections.mysql');
+
+        $parameters = [
+            'LOGO' => $logo_path,
+            'PRODUK' => $product_path,
+            'TTD' => $ttd_path,
+            'KODETRANSAKSI_INPUT' => $transaksi->id,
+        ];
+
+        try {
+            // ❗ Simpan ke folder temp Laravel (AMAN)
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) mkdir($tempDir, 0777, true);
+
+            $outputFile = $tempDir . '/nota-' . $transaksi->kodetransaksi;
+
+            $jasper = new \PHPJasper\PHPJasper;
+            $jasper->process(
+                $jasper_file,
+                $outputFile,
+                [
+                    'format' => ['pdf'],
+                    'params' => $parameters,
+                    'db_connection' => [
+                        'driver' => 'mysql',
+                        'host' => $db['host'],
+                        'port' => $db['port'],
+                        'database' => $db['database'],
+                        'username' => $db['username'],
+                        'password' => $db['password'],
+                    ],
+                ]
+            )->execute();
+
+            $pdfPath = $outputFile . '.pdf';
+
+            // ❗ Baca isi PDF
+            $pdfContent = file_get_contents($pdfPath);
+
+            // ❗ Hapus file setelah dibaca
+            unlink($pdfPath);
+
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="NOTA-' . $transaksi->kodetransaksi . '.pdf"',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Gagal membuat nota: ' . $e->getMessage()], 500);
+        }
+    }
+
     public function CompileReports()
     {
         // Target file JRXML
-        $input_jrxml = resource_path('reports/CetakNotaPembelian.jrxml');
+        $input_jrxml = resource_path('reports/CetakNotaOfftake.jrxml');
         $output_dir = resource_path('reports'); // Output .jasper di folder reports/
 
         if (!file_exists($input_jrxml)) {
@@ -293,8 +382,8 @@ class CetakBarcodeProduk extends Controller
             )->execute();
 
             return response()->json([
-                'message' => 'Kompilasi CetakNotaPembelian.jrxml berhasil!',
-                'output_file' => $output_dir . '/CetakNotaPembelian.jasper'
+                'message' => 'Kompilasi CetakNotaOfftake.jrxml berhasil!',
+                'output_file' => $output_dir . '/CetakNotaOfftake.jasper'
             ]);
         } catch (\Exception $e) {
             // Jika ini gagal, cek kembali JRXML Anda di Jaspersoft Studio!
