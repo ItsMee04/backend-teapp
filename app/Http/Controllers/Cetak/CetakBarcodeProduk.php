@@ -362,10 +362,176 @@ class CetakBarcodeProduk extends Controller
         }
     }
 
+    // Tambahkan fungsi baru ini di Controller Anda
+    public function getSignedRekapPenjualanUrl(Request $request)
+    {
+        // Gunakan nama route untuk cetak nota offtake
+        $route_name = 'produk.cetak_rekappenjualan';
+        $expiration = now()->addMinutes(5); // URL akan kadaluarsa dalam 5 menit
+
+        $signedUrl = URL::temporarySignedRoute(
+            $route_name,
+            $expiration,
+            [
+                'TANGGAL_INPUT' => $request->TANGGAL_INPUT
+            ] // Parameter yang dibutuhkan oleh PrintRekapPenjualan
+        );
+
+        return response()->json(['url' => $signedUrl]);
+    }
+
+    public function PrintRekapPenjualan(Request $request)
+    {
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
+
+        if (!$request->hasValidSignature()) {
+            abort(401, 'Invalid signature.');
+        }
+
+        $params = $request->get('TANGGAL_INPUT');
+
+        if (!$params) {
+            abort(400, 'Tanggal tidak ditemukan');
+        }
+
+        $jasper_file = resource_path('reports/RekapPenjualanHarian.jasper');
+
+        $db = config('database.connections.mysql');
+
+        $parameters = [
+            'TANGGAL_INPUT' => $params,
+        ];
+
+        try {
+            // ❗ Simpan ke folder temp Laravel (AMAN)
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) mkdir($tempDir, 0777, true);
+
+            $outputFile = $tempDir . '/RekapPenjualan-' . $params;
+
+            $jasper = new \PHPJasper\PHPJasper;
+            $jasper->process(
+                $jasper_file,
+                $outputFile,
+                [
+                    'format' => ['pdf'],
+                    'params' => $parameters,
+                    'db_connection' => [
+                        'driver' => 'mysql',
+                        'host' => $db['host'],
+                        'port' => $db['port'],
+                        'database' => $db['database'],
+                        'username' => $db['username'],
+                        'password' => $db['password'],
+                    ],
+                ]
+            )->execute();
+
+            $pdfPath = $outputFile . '.pdf';
+
+            // ❗ Baca isi PDF
+            $pdfContent = file_get_contents($pdfPath);
+
+            // ❗ Hapus file setelah dibaca
+            unlink($pdfPath);
+
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="REKAP-PENJUALAN-' . $params . '.pdf"',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Gagal membuat laporan: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // Tambahkan fungsi baru ini di Controller Anda
+    public function getSignedRekapPembelianUrl(Request $request)
+    {
+        // Gunakan nama route untuk cetak nota offtake
+        $route_name = 'produk.cetak_rekappembelian';
+        $expiration = now()->addMinutes(5); // URL akan kadaluarsa dalam 5 menit
+
+        $signedUrl = URL::temporarySignedRoute(
+            $route_name,
+            $expiration,
+            [
+                'TANGGAL_INPUT' => $request->TANGGAL_INPUT
+            ] // Parameter yang dibutuhkan oleh PrintRekapPembelian
+        );
+
+        return response()->json(['url' => $signedUrl]);
+    }
+
+    public function PrintRekapPembelian(Request $request)
+    {
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
+
+        if (!$request->hasValidSignature()) {
+            abort(401, 'Invalid signature.');
+        }
+
+        $params = $request->get('TANGGAL_INPUT');
+
+        if (!$params) {
+            abort(400, 'Tanggal tidak ditemukan');
+        }
+
+        $jasper_file = resource_path('reports/RekapPembelianHarian.jasper');
+
+        $db = config('database.connections.mysql');
+
+        $parameters = [
+            'TANGGAL_INPUT' => $params,
+        ];
+
+        try {
+            // ❗ Simpan ke folder temp Laravel (AMAN)
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) mkdir($tempDir, 0777, true);
+
+            $outputFile = $tempDir . '/RekapPembelian-' . $params;
+
+            $jasper = new \PHPJasper\PHPJasper;
+            $jasper->process(
+                $jasper_file,
+                $outputFile,
+                [
+                    'format' => ['pdf'],
+                    'params' => $parameters,
+                    'db_connection' => [
+                        'driver' => 'mysql',
+                        'host' => $db['host'],
+                        'port' => $db['port'],
+                        'database' => $db['database'],
+                        'username' => $db['username'],
+                        'password' => $db['password'],
+                    ],
+                ]
+            )->execute();
+
+            $pdfPath = $outputFile . '.pdf';
+
+            // ❗ Baca isi PDF
+            $pdfContent = file_get_contents($pdfPath);
+
+            // ❗ Hapus file setelah dibaca
+            unlink($pdfPath);
+
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="REKAP-PEMBELIAN-' . $params . '.pdf"',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Gagal membuat laporan: ' . $e->getMessage()], 500);
+        }
+    }
+
     public function CompileReports()
     {
         // Target file JRXML
-        $input_jrxml = resource_path('reports/CetakNotaOfftake.jrxml');
+        $input_jrxml = resource_path('reports/RekapPembelianHarian.jrxml');
         $output_dir = resource_path('reports'); // Output .jasper di folder reports/
 
         if (!file_exists($input_jrxml)) {
@@ -382,8 +548,8 @@ class CetakBarcodeProduk extends Controller
             )->execute();
 
             return response()->json([
-                'message' => 'Kompilasi CetakNotaOfftake.jrxml berhasil!',
-                'output_file' => $output_dir . '/CetakNotaOfftake.jasper'
+                'message' => 'Kompilasi RekapPembelianHarian.jrxml berhasil!',
+                'output_file' => $output_dir . '/RekapPembelianHarian.jasper'
             ]);
         } catch (\Exception $e) {
             // Jika ini gagal, cek kembali JRXML Anda di Jaspersoft Studio!
