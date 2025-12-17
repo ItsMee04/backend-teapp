@@ -25,12 +25,10 @@ class KondisiController extends Controller
 
         $credentials = $request->validate([
             'kondisi'       =>  'required|unique:kondisi',
-            'jenis'         =>  'required'
         ], $messages);
 
         $Kondisi = Kondisi::create([
             'kondisi'       =>  toUpper($request->kondisi),
-            'jenis'         =>  $request->jenis,
             'status'        =>  1,
         ]);
 
@@ -53,7 +51,6 @@ class KondisiController extends Controller
 
         $credentials = $request->validate([
             'kondisi'       => 'required',
-            'jenis'         => 'required'
         ], $messages);
 
         // Cari data kondisi berdasarkan ID
@@ -67,7 +64,6 @@ class KondisiController extends Controller
         // Update data kondisi
         $kondisi->update([
             'kondisi' => toUpper($request->kondisi),
-            'jenis'   => $request->jenis
         ]);
 
         return response()->json(['success' => true, 'message' => 'Kondisi Berhasil Diperbarui.']);

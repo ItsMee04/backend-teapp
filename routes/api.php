@@ -87,6 +87,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('harga/getHarga', [HargaController::class, 'getHarga']);
     Route::post('harga/storeHarga', [HargaController::class, 'storeHarga']);
     Route::put('harga/updateHarga', [HargaController::class, 'updateHarga']);
+    Route::post('harga/deleteHarga', [HargaController::class, 'deleteHarga']);
 
     //API DISKON
     Route::get('diskon/getDiskon', [DiskonController::class, 'getDiskon']);

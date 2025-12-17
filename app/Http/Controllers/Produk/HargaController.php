@@ -83,4 +83,22 @@ class HargaController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Data Harga Berhasil Diupdate', 'data' => $harga]);
     }
+
+    public function deleteHarga(Request $request)
+    {
+        // Cari data kondisi berdasarkan ID
+        $harga = Harga::find($request->id);
+
+        // Periksa apakah data ditemukan
+        if (!$harga) {
+            return response()->json(['success' => false, 'message' => 'Kondisi tidak ditemukan.'], 404);
+        }
+
+        // Update status menjadi 0 (soft delete manual)
+        $harga->update([
+            'status' => 0,
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Harga Berhasil Dihapus.']);
+    }
 }
