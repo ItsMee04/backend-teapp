@@ -15,6 +15,7 @@ use App\Http\Controllers\Transaksi\OfftakeController;
 use App\Http\Controllers\Produk\JenisProdukController;
 use App\Http\Controllers\Authentication\AuthController;
 use App\Http\Controllers\Pelanggan\PelangganController;
+use App\Http\Controllers\Produk\HargaController;
 use App\Http\Controllers\Produk\NampanProdukController;
 use App\Http\Controllers\Transaksi\PembelianController;
 use App\Http\Controllers\Transaksi\PerbaikanController;
@@ -81,6 +82,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('kondisi/deleteKondisi', [KondisiController::class, 'deletekondisi']);
     Route::get('kondisi/getKondisiByJenisPembelian', [KondisiController::class, 'getKondisiByJenisPembelian']);
     Route::get('kondisi/getKondisiByJenisPenjualan', [KondisiController::class, 'getKondisiByJenisPenjualan']);
+
+    // API HARGA
+    Route::get('harga/getHarga', [HargaController::class, 'getHarga']);
+    Route::post('harga/storeHarga', [HargaController::class, 'storeHarga']);
+    Route::put('harga/updateHarga', [HargaController::class, 'updateHarga']);
 
     //API DISKON
     Route::get('diskon/getDiskon', [DiskonController::class, 'getDiskon']);
