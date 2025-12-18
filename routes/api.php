@@ -2,6 +2,8 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Produk\HargaController;
+use App\Http\Controllers\Produk\KaratController;
 use App\Http\Controllers\POS\KeranjangController;
 use App\Http\Controllers\Produk\DiskonController;
 use App\Http\Controllers\Produk\NampanController;
@@ -15,7 +17,7 @@ use App\Http\Controllers\Transaksi\OfftakeController;
 use App\Http\Controllers\Produk\JenisProdukController;
 use App\Http\Controllers\Authentication\AuthController;
 use App\Http\Controllers\Pelanggan\PelangganController;
-use App\Http\Controllers\Produk\HargaController;
+use App\Http\Controllers\Produk\JenisKaratController;
 use App\Http\Controllers\Produk\NampanProdukController;
 use App\Http\Controllers\Transaksi\PembelianController;
 use App\Http\Controllers\Transaksi\PerbaikanController;
@@ -82,6 +84,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('kondisi/deleteKondisi', [KondisiController::class, 'deletekondisi']);
     Route::get('kondisi/getKondisiByJenisPembelian', [KondisiController::class, 'getKondisiByJenisPembelian']);
     Route::get('kondisi/getKondisiByJenisPenjualan', [KondisiController::class, 'getKondisiByJenisPenjualan']);
+
+    // API KARAT
+    Route::get('karat/getKarat', [KaratController::class, 'getKarat']);
+    Route::post('karat/storeKarat', [KaratController::class, 'storeKarat']);
+    Route::post('karat/updateKarat', [KaratController::class, 'updateKarat']);
+    Route::post('karat/deleteKarat', [KaratController::class, 'deleteKarat']);
+
+    // API JENIS KARAT
+    Route::get('jeniskarat/getJenisKarat', [JenisKaratController::class, 'getJenisKarat']);
+    Route::post('jeniskarat/storeJenisKarat', [JenisKaratController::class, 'storeJenisKarat']);
+    Route::post('jeniskarat/updateJenisKarat', [JenisKaratController::class, 'updateJenisKarat']);
+    Route::post('jeniskarat/deleteJenisKarat', [JenisKaratController::class, 'deleteJenisKarat']);
 
     // API HARGA
     Route::get('harga/getHarga', [HargaController::class, 'getHarga']);

@@ -5,20 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Harga extends Model
+class Karat extends Model
 {
     use HasFactory;
     protected $hidden = ['created_at', 'updated_at', 'deleted_at']; // Menyembunyikan created_at dan updated_at secara global
-    protected $table    = 'harga';
+    protected $table    = 'karat';
     protected $fillable =
     [
-        'jenis_karat_id',
-        'harga',
+        'karat',
         'status'
     ];
 
     public function jenisKarat()
     {
-        return $this->belongsTo(JenisKarat::class, 'jenis_karat_id', 'id');
+        return $this->hasMany(JenisKarat::class, 'karat_id', 'id');
     }
 }
