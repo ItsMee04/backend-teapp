@@ -12,13 +12,6 @@ class KaratController extends Controller
     {
         $karat = Karat::where('status', 1)->get();
 
-        if ($karat->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data karat tidak ada.'
-            ], 404);
-        }
-
         return response()->json([
             'success' => true,
             'message' => 'Data karat berhasil ditemukan.',
