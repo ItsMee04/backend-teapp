@@ -29,17 +29,25 @@ class ProdukController extends Controller
 
     public function getProduk()
     {
-        $produk = Produk::where('status', '!=', 0)
-            ->with(['jenisproduk', 'kondisi'])
+        $produk = Produk::with(['jenisproduk', 'karat', 'jeniskarat', 'harga', 'kondisi'])
             ->withCount(['keranjang as jumlah_terjual' => function ($q) {
                 $q->where('status', 2); // hanya yang benar-benar selesai
             }])
+            ->where('status', 1)
             ->get();
+
+        if ($produk->isEmpty()) {
+            return response()->json([
+                'status'  => 404,
+                'success' => false,
+                'message' => 'Data Produk Tidak Ditemukan',
+            ]);
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Data Produk Berhasil Ditemukan',
-            'Data' => $produk
+            'data' => $produk
         ]);
     }
 
@@ -48,20 +56,23 @@ class ProdukController extends Controller
         $messages = [
             'required' => ':attribute wajib di isi !!!',
             'integer'  => ':attribute format wajib menggunakan angka',
+            'exists'   => ':attribute yang dipilih tidak valid atau tidak ditemukan !!!',
             'mimes'    => ':attribute format wajib menggunakan PNG/JPG'
         ];
 
         $credentials = $request->validate([
             'nama'          =>  'required',
-            'jenis'         =>  'required|' . Rule::in(JenisProduk::where('status', 1)->pluck('id')),
-            'harga_jual'    =>  'integer',
-            'keterangan'    =>  'nullable|string',
             'berat'         =>  [
                 'required',
                 'regex:/^\d+\.\d{1,}$/'
             ],
-            'kondisi'       =>  'required',
-            'karat'         =>  'required|integer',
+            'jenis'         =>  'required|exists:jenis_produk,id',
+            'karat'         =>  'required|exists:karat,id',
+            'jeniskarat'    =>  'required|exists:jenis_karat,id',
+            'lingkar'       =>  'nullable|integer',
+            'panjang'       =>  'nullable|integer',
+            'harga_jual'    =>  'integer',
+            'keterangan'    =>  'nullable|string',
             'lingkar'       =>  'nullable|integer',
             'panjang'       =>  'nullable|integer',
             'imageProduk'   =>  'nullable|mimes:png,jpg',
@@ -99,10 +110,10 @@ class ProdukController extends Controller
         $data = Produk::create([
             'kodeproduk'        =>  $kodeproduk,
             'nama'              =>  toUpper($request->nama),
-            'jenisproduk_id'    =>  $request->jenis,
-            'kondisi_id'        =>  $request->kondisi,
             'berat'             =>  $request->berat,
-            'karat'             =>  $request->karat,
+            'jenisproduk_id'    =>  $request->jenis,
+            'karat_id'          =>  $request->karat,
+            'jenis_karat_id'    =>  $request->jeniskarat,
             'lingkar'           =>  $request->lingkar ?? 0,
             'panjang'           =>  $request->panjang ?? 0,
             'harga_jual'        =>  $request->hargajual,
@@ -121,73 +132,58 @@ class ProdukController extends Controller
         return response()->json(['success' => true, 'message' => 'Data Produk Berhasil Ditemukan', 'Data' => $produk]);
     }
 
-    public function updateProduk(Request $request, $id)
+    public function updateProduk(Request $request)
     {
-        $produk = Produk::where('id', $id)->first();
+        $produk = Produk::findOrFail($request->id);
 
-        $messages = [
-            'required' => ':attribute wajib di isi !!!',
-            'integer'  => ':attribute format wajib menggunakan angka',
-            'mimes'    => ':attribute format wajib menggunakan PNG/JPG'
+        $request->validate([
+            'nama'        => 'required',
+            'berat'       => 'required|numeric',
+            'jenis'       => 'required|exists:jenis_produk,id',
+            'karat'       => 'required|exists:karat,id',
+            'jeniskarat'  => 'required|exists:jenis_karat,id',
+            'hargajual'  => 'required|integer',
+            'imageProduk' => 'nullable|mimes:png,jpg',
+            'lingkar'     => 'nullable|integer',
+            'panjang'     => 'nullable|integer',
+        ], [
+            'required' => ':attribute wajib diisi!',
+            'exists'   => ':attribute tidak ditemukan!',
+            'mimes'    => 'Format gambar harus PNG/JPG'
+        ]);
+
+        // Persiapkan data dasar untuk diupdate
+        $data = [
+            'nama'           => toUpper($request->nama),
+            'jenisproduk_id' => $request->jenis,
+            'karat_id'       => $request->karat,
+            'jenis_karat_id' => $request->jeniskarat,
+            'harga_jual'     => $request->hargajual, // Simpan ID Harga referensi
+            'berat'          => $request->berat,
+            'lingkar'        => $request->lingkar ?? 0,
+            'panjang'        => $request->panjang ?? 0,
+            'keterangan'     => toUpper($request->keterangan),
         ];
 
-        $credentials = $request->validate([
-            'nama'          =>  'required',
-            'jenis'         =>  'required|' . Rule::in(JenisProduk::where('status', 1)->pluck('id')),
-            'harga_jual'    =>  'integer',
-            'keterangan'    =>  'nullable|string',
-            'berat'         =>  [
-                'required',
-                'regex:/^\d+\.\d{1,}$/'
-            ],
-            'kondisi'       =>  'required',
-            'karat'         =>  'required|integer',
-            'lingkar'       =>  'integer',
-            'panjang'       =>  'integer',
-            'imageProduk'   =>  'nullable|mimes:png,jpg',
-        ], $messages);
-
-        if ($request->file('imageProduk')) {
-            $pathavatar     = 'storage/produk/' . $produk->image_produk;
-
-            if (File::exists($pathavatar)) {
-                File::delete($pathavatar);
+        // Logika upload gambar jika ada file baru
+        if ($request->hasFile('imageProduk')) {
+            // Hapus file lama jika ada
+            if ($produk->image_produk) {
+                Storage::delete('produk/' . $produk->image_produk);
             }
 
-            $extension = $request->file('imageProduk')->getClientOriginalExtension();
-            $newImage = $produk->kodeproduk . '.' . $extension;
+            $newImage = $produk->kodeproduk . '.' . $request->file('imageProduk')->extension();
             $request->file('imageProduk')->storeAs('produk', $newImage);
-            $request['imageProduk'] = $newImage;
-
-            $updateProduk = Produk::where('id', $id)
-                ->update([
-                    'nama'              =>  toUpper($request->nama),
-                    'jenisproduk_id'    =>  $request->jenis,
-                    'kondisi_id'        =>  $request->kondisi,
-                    'berat'             =>  $request->berat,
-                    'karat'             =>  $request->karat,
-                    'lingkar'           =>  $request->lingkar ?? 0,
-                    'panjang'           =>  $request->panjang ?? 0,
-                    'harga_jual'        =>  $request->hargajual,
-                    'keterangan'        =>  toUpper($request->keterangan),
-                    'image_produk'      =>  $newImage,
-                ]);
-        } else {
-            $updateProduk = Produk::where('id', $id)
-                ->update([
-                    'nama'              =>  toUpper($request->nama),
-                    'jenisproduk_id'    =>  $request->jenis,
-                    'kondisi_id'        =>  $request->kondisi,
-                    'berat'             =>  $request->berat,
-                    'karat'             =>  $request->karat,
-                    'lingkar'           =>  $request->lingkar,
-                    'panjang'           =>  $request->panjang,
-                    'harga_jual'        =>  $request->hargajual,
-                    'keterangan'        =>  toUpper($request->keterangan),
-                ]);
+            $data['image_produk'] = $newImage;
         }
 
-        return response()->json(['success' => true, 'message' => 'Data Produk Berhasil Disimpan', 'Data' => $produk]);
+        $produk->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data Produk Berhasil Diperbarui',
+            'data'    => $produk
+        ]);
     }
 
     public function deleteProduk(Request $request)

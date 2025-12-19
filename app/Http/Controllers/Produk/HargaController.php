@@ -63,14 +63,19 @@ class HargaController extends Controller
     {
         // Validasi input
         $messages = [
-            'required' => ':attribute wajib di isi !!!',
+            'required' => ':attribute wajib diisi !!!',
             'integer'  => ':attribute wajib menggunakan angka !!!',
+            'exists'   => ':attribute yang dipilih tidak valid atau tidak ditemukan !!!',
         ];
 
-        $credentials = $request->validate([
-            'karat'   =>  'required|integer',
-            'jenis'    =>  'required|string|max:100',
-            'harga'    =>  'required|integer'
+        $request->validate([
+            // Memastikan id ada di tabel karats kolom id
+            'karat' => 'required|integer|exists:karat,id',
+
+            // Memastikan id ada di tabel jenis_karats kolom id
+            'jenis' => 'required|integer|exists:jenis_karat,id',
+
+            'harga' => 'required|integer'
         ], $messages);
 
         // Cari data harga berdasarkan ID
@@ -82,9 +87,9 @@ class HargaController extends Controller
         }
 
         // Update data harga
-        $harga->karat = $request->karat;
-        $harga->jenis = toUpper($request->jenis);
-        $harga->harga = $request->harga;
+        $harga->karat_id        = $request->karat;
+        $harga->jenis_karat_id  = $request->jenis;
+        $harga->harga           = $request->harga;
         $harga->save();
 
         return response()->json(['success' => true, 'message' => 'Data Harga Berhasil Diupdate', 'data' => $harga]);
@@ -106,5 +111,42 @@ class HargaController extends Controller
         ]);
 
         return response()->json(['success' => true, 'message' => 'Harga Berhasil Dihapus.']);
+    }
+
+    public function getHargaByID(Request $request)
+    {
+        // Validasi input
+        $messages = [
+            'required' => ':attribute wajib diisi !!!',
+            'integer'  => ':attribute wajib menggunakan angka !!!',
+            'exists'   => ':attribute yang dipilih tidak valid atau tidak ditemukan !!!',
+        ];
+
+        $request->validate([
+            // Memastikan id ada di tabel karats kolom id
+            'karat' => 'required|integer|exists:karat,id',
+            // Memastikan id ada di tabel jenis_karats kolom id
+            'jenis' => 'required|integer|exists:jenis_karat,id',
+        ], $messages);
+
+        $harga = Harga::with(['karat', 'jeniskarat'])
+            ->where('karat_id', $request->karat)
+            ->where('jenis_karat_id', $request->jenis)
+            ->where('status', 1)
+            ->get();
+
+        if (!$harga) {
+            return response()->json([
+                'status'    => 404,
+                'success'    => false,
+                'message'   => 'Data harga tidak ditemukan',
+            ]);
+        }
+
+        return response()->json([
+            'success'    => true,
+            'message'   => 'Data harga berhasil ditemukan',
+            'data'      => $harga,
+        ]);
     }
 }

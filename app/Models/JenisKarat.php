@@ -26,4 +26,9 @@ class JenisKarat extends Model
     {
         return $this->hasMany(Harga::class, 'jenis_karat_id', 'id');
     }
+
+    public function produk()
+    {
+        return $this->hasMany(Produk::class, 'jenis_karat_id', 'id');
+    }
 }

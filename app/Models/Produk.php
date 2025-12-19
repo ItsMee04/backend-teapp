@@ -14,12 +14,13 @@ class Produk extends Model
     protected $fillable =
     [
         'kodeproduk',
-        'jenisproduk_id',
         'nama',
+        'berat',
+        'jenisproduk_id',
+        'karat_id',
+        'jenis_karat_id',
         'harga_jual',
         'harga_beli',
-        'berat',
-        'karat',
         'lingkar',
         'panjang',
         'keterangan',
@@ -51,5 +52,20 @@ class Produk extends Model
     public function keranjang()
     {
         return $this->hasMany(Keranjang::class, 'produk_id');
+    }
+
+    public function karat()
+    {
+        return $this->belongsTo(Karat::class, 'karat_id', 'id');
+    }
+
+    public function jeniskarat()
+    {
+        return $this->belongsTo(JenisKarat::class, 'jenis_karat_id', 'id');
+    }
+
+    public function harga()
+    {
+        return $this->belongsTo(Harga::class, 'harga_jual', 'id');
     }
 }

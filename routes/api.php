@@ -17,6 +17,7 @@ use App\Http\Controllers\Transaksi\OfftakeController;
 use App\Http\Controllers\Produk\JenisProdukController;
 use App\Http\Controllers\Authentication\AuthController;
 use App\Http\Controllers\Pelanggan\PelangganController;
+use App\Http\Controllers\Pelanggan\TemplatePesanController;
 use App\Http\Controllers\Produk\JenisKaratController;
 use App\Http\Controllers\Produk\NampanProdukController;
 use App\Http\Controllers\Transaksi\PembelianController;
@@ -103,6 +104,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('harga/storeHarga', [HargaController::class, 'storeHarga']);
     Route::put('harga/updateHarga', [HargaController::class, 'updateHarga']);
     Route::post('harga/deleteHarga', [HargaController::class, 'deleteHarga']);
+    Route::post('harga/getHargaByID', [HargaController::class, 'getHargaByID']);
 
     //API DISKON
     Route::get('diskon/getDiskon', [DiskonController::class, 'getDiskon']);
@@ -122,7 +124,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('produk/getProduk', [ProdukController::class, 'getProduk']);
     Route::post('produk/storeProduk', [ProdukController::class, 'storeProduk']);
     Route::get('produk/getProdukByID/{id}', [ProdukController::class, 'getProdukByID']);
-    Route::put('produk/updateProduk/{id}', [ProdukController::class, 'updateProduk']);
+    Route::post('produk/updateProduk', [ProdukController::class, 'updateProduk']);
     Route::post('produk/deleteProduk', [ProdukController::class, 'deleteProduk']);
 
     //API NAMPAN
@@ -150,6 +152,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('pelanggan/getPelangganByID/{id}', [PelangganController::class, 'getPelangganByID']);
     Route::put('pelanggan/updatePelanggan/{id}', [PelangganController::class, 'updatePelanggan']);
     Route::post('pelanggan/deletePelanggan', [PelangganController::class, 'deletePelanggan']);
+
+    // API TEMPLATE PESAN
+    Route::get('pesan/getPesan', [TemplatePesanController::class, 'getPesan']);
+    Route::post('pesan/storePesan', [TemplatePesanController::class, 'storePesan']);
+    Route::post('pesan/updatePesan', [TemplatePesanController::class, 'updatePesan']);
+    Route::post('pesan/deletePesan', [TemplatePesanController::class, 'deletePesan']);
 
     //API SUPLIER
     Route::get('suplier/getSuplier', [SuplierController::class, 'getSuplier']);
