@@ -21,4 +21,9 @@ class JenisKarat extends Model
     {
         return $this->belongsTo(Karat::class, 'karat_id', 'id');
     }
+
+    public function harga()
+    {
+        return $this->hasMany(Harga::class, 'jenis_karat_id', 'id');
+    }
 }

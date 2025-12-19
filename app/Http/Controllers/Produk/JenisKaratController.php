@@ -14,9 +14,10 @@ class JenisKaratController extends Controller
 
         if($jeniskarat->isEmpty()){
             return response()->json([
+                'status'  => 404,
                 'success' => false,
                 'message' => 'Data Jenis Karat Tidak Ditemukan'
-            ], 404);
+            ]);
         }
 
         return response()->json([
@@ -108,6 +109,25 @@ class JenisKaratController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Jenis Karat Berhasil Dihapus',
+            'data' => $jeniskarat
+        ], 200);
+    }
+
+    public function getJenisKaratByKarat(Request $request)
+    {
+        $jeniskarat = JenisKarat::where('karat_id', $request->karat)->where('status',1)->get();
+
+        if($jeniskarat->isEmpty()){
+            return response()->json([
+                'status'  => 404,
+                'success' => false,
+                'message' => 'Data Jenis Karat Tidak Ditemukan'
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data Jenis Karat Ditemukan',
             'data' => $jeniskarat
         ], 200);
     }

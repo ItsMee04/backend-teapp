@@ -10,14 +10,15 @@ class HargaController extends Controller
 {
     public function getHarga()
     {
-        $data = Harga::where('status', 1)->get();
+        $data = Harga::with(['karat', 'jeniskarat'])->where('status', 1)->get();
 
-        // if ($data->isEmpty()) {
-        //     return response()->json([
-        //         'success'    => false,
-        //         'message'   => 'Data harga tidak ditemukan',
-        //     ], 404);
-        // }
+        if ($data->isEmpty()) {
+            return response()->json([
+                'status'    => 404,
+                'success'    => false,
+                'message'   => 'Data harga tidak ditemukan',
+            ]);
+        }
 
         return response()->json([
             'success'    => true,
@@ -29,21 +30,26 @@ class HargaController extends Controller
     public function storeHarga(Request $request)
     {
         $messages = [
-            'required' => ':attribute wajib di isi !!!',
+            'required' => ':attribute wajib diisi !!!',
             'integer'  => ':attribute wajib menggunakan angka !!!',
+            'exists'   => ':attribute yang dipilih tidak valid atau tidak ditemukan !!!',
         ];
 
-        $credentials = $request->validate([
-            'karat'   =>  'required|integer',
-            'jenis'    =>  'required|string|max:100',
-            'harga'    =>  'required|integer'
+        $request->validate([
+            // Memastikan id ada di tabel karats kolom id
+            'karat' => 'required|integer|exists:karat,id',
+
+            // Memastikan id ada di tabel jenis_karats kolom id
+            'jenis' => 'required|integer|exists:jenis_karat,id',
+
+            'harga' => 'required|integer'
         ], $messages);
 
         $harga = Harga::create([
-            'karat'     => $request->karat,
-            'jenis'     => toUpper($request->jenis),
-            'harga'     => $request->harga,
-            'status'    => 1,
+            'karat_id'          => $request->karat,
+            'jenis_karat_id'    => $request->jenis,
+            'harga'             => $request->harga,
+            'status'            => 1,
         ]);
 
         return response()->json([

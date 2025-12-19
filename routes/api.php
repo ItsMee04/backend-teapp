@@ -96,6 +96,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('jeniskarat/storeJenisKarat', [JenisKaratController::class, 'storeJenisKarat']);
     Route::post('jeniskarat/updateJenisKarat', [JenisKaratController::class, 'updateJenisKarat']);
     Route::post('jeniskarat/deleteJenisKarat', [JenisKaratController::class, 'deleteJenisKarat']);
+    Route::post('jeniskarat/getJenisKaratByKarat', [JenisKaratController::class, 'getJenisKaratByKarat']);
 
     // API HARGA
     Route::get('harga/getHarga', [HargaController::class, 'getHarga']);

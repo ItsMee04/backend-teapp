@@ -12,10 +12,16 @@ class Harga extends Model
     protected $table    = 'harga';
     protected $fillable =
     [
+        'karat_id',
         'jenis_karat_id',
         'harga',
         'status'
     ];
+
+    public function karat()
+    {
+        return $this->belongsTo(Karat::class, 'karat_id', 'id');
+    }
 
     public function jenisKarat()
     {
