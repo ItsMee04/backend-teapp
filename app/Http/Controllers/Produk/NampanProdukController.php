@@ -55,8 +55,9 @@ class NampanProdukController extends Controller
         // Cari semua produk dengan jenisproduk_id yang sesuai
         // dan pastikan statusnya aktif (misal, status = 1).
         $products = DB::table('nampan_produk as np')
-            ->select('n.nampan', 'p.id', 'p.nama', 'p.image_produk', 'p.berat', 'p.harga_jual')
+            ->select('n.nampan', 'p.id', 'p.nama', 'p.image_produk', 'p.berat', 'h.harga as harga_jual')
             ->leftJoin('produk as p', 'np.produk_id', '=', 'p.id')
+            ->leftJoin('harga as h','p.harga_jual','=','h.id')
             ->leftJoin('nampan as n', 'np.nampan_id', '=', 'n.id')
             ->leftJoin('jenis_produk as jp', 'n.jenisproduk_id', '=', 'jp.id')
             ->where('jp.id', $id)
@@ -109,7 +110,7 @@ class NampanProdukController extends Controller
 
     public function getProduk()
     {
-        $produk = NampanProduk::where('status', 1)->with(['produk', 'produk.jenisproduk', 'nampan'])->get();
+        $produk = NampanProduk::where('status', 1)->with(['produk', 'produk.jenisproduk','produk.karat','produk.harga', 'nampan'])->get();
 
         // Tambahkan hargatotal ke setiap produk
         $produk->each(function ($item) {
