@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('template_pesan', function (Blueprint $table) {
             $table->id();
+            $table->string('judul',100);
             $table->text('pesan');
             $table->integer('status')->default(1);
             $table->timestamps();

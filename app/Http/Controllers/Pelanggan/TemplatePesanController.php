@@ -34,10 +34,12 @@ class TemplatePesanController extends Controller
         ];
 
         $request->validate([
+            'judul' => 'required',
             'pesan' => 'required'
         ], $messages);
 
         $pesan = TemplatePesan::create([
+            'judul'     => $request->judul,
             'pesan'     => $request->pesan,
             'status'    => 1,
         ]);
@@ -57,6 +59,7 @@ class TemplatePesanController extends Controller
 
         $request->validate([
             'id'    => 'required',
+            'judul' => 'required',
             'pesan' => 'required'
         ], $messages);
 
