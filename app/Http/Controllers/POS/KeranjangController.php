@@ -120,7 +120,7 @@ class KeranjangController extends Controller
             $kodeTransaksi = $activeTransaksi->kodetransaksi;
 
             // Cari produk berdasarkan ID
-            $produk = Produk::find($request->id);
+            $produk = Produk::with(['karat','harga'])->where('id',$request->id)->first();
 
             if (!$produk) {
                 return response()->json([
@@ -142,17 +142,21 @@ class KeranjangController extends Controller
                 ]);
             }
 
+            $karat      = $produk->karat->karat;
+            $hargajual  = $produk->harga->harga;
+            $berat      = $produk->berat;
+
             // Hitung total harga
-            $total = $produk->harga_jual * $produk->berat;
+            $total = $hargajual * $berat;
             $terbilang = ucwords(trim($this->terbilang(abs($total)))) . ' Rupiah';
 
             // Simpan ke keranjang
             $keranjang = Keranjang::create([
                 'kodetransaksi' => $kodeTransaksi,
                 'produk_id'     => $produk->id,
-                'harga_jual'    => $produk->harga_jual,
+                'harga_jual'    => $hargajual,
                 'berat'         => $produk->berat,
-                'karat'         => $produk->karat,
+                'karat'         => $karat,
                 'lingkar'       => $produk->lingkar,
                 'panjang'       => $produk->panjang,
                 'total'         => $total,

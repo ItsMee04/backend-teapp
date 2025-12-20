@@ -16,7 +16,7 @@ class NampanProdukController extends Controller
 {
     public function getNampanProduk($id)
     {
-        $query = NampanProduk::with(['nampan', 'produk', 'produk.jenisproduk', 'user'])->where('status', 1);
+        $query = NampanProduk::with(['nampan', 'produk', 'produk.jenisproduk','produk.harga', 'user'])->where('status', 1);
 
         if ($id !== 'all') {
             $query->where('nampan_id', $id);

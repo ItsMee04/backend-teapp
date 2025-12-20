@@ -181,7 +181,7 @@ class TransaksiController extends Controller
             'diskon',
             'keranjang' => function ($query) {
                 $query->where('status', 2) // filter keranjang
-                    ->with(['produk', 'user']); // eager load nested relasi
+                    ->with(['produk', 'user', 'produk.harga', 'produk.karat']); // eager load nested relasi
             },
             'user',
             'user.pegawai'

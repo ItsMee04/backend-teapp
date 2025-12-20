@@ -39,7 +39,7 @@ class TemplatePesanController extends Controller
         ], $messages);
 
         $pesan = TemplatePesan::create([
-            'judul'     => $request->judul,
+            'judul'     => toUpper($request->judul),
             'pesan'     => $request->pesan,
             'status'    => 1,
         ]);
@@ -74,6 +74,7 @@ class TemplatePesanController extends Controller
         }
 
         $pesan->pesan = $request->pesan;
+        $pesan->judul = toUpper($request->judul);
         $pesan->save();
 
         return response()->json([

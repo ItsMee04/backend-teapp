@@ -126,7 +126,7 @@ class KeranjangOfftakeController extends Controller
 
     public function getKeranjangOfftakeAktif()
     {
-        $offtake = KeranjangOfftake::with(['produk', 'user.pegawai'])
+        $offtake = KeranjangOfftake::with(['produk', 'user.pegawai', 'produk.karat','produk.harga'])
             ->where('oleh', Auth::user()->id)
             ->where('status', 1)
             ->get();
@@ -167,7 +167,7 @@ class KeranjangOfftakeController extends Controller
         }
 
         // 🔹 Ambil semua produk berdasarkan produk_ids
-        $produkList = Produk::whereIn('id', $request->produk_ids)->get();
+        $produkList = Produk::with(['karat', 'harga'])->whereIn('id', $request->produk_ids)->get();
 
         if ($produkList->isEmpty()) {
             return response()->json([
@@ -207,17 +207,23 @@ class KeranjangOfftakeController extends Controller
                 continue;
             }
 
-            // Hitung subtotal
-            $subtotalHargaBaru = $produk->harga_jual * $produk->berat;
-            $angka = abs($subtotalHargaBaru);
-            $terbilang = ucwords(trim($this->terbilang($angka))) . ' Rupiah';
+            // 1. Ambil Harga dari relasi (Gunakan fallback ke harga_jual jika relasi kosong)
+            $hargaSatuan = $produk->harga ? $produk->harga->harga : $produk->harga_jual;
+
+            // 2. Ambil Nilai Karat dari relasi
+            $nilaiKarat = $produk->karat ? $produk->karat->karat : $produk->karat_id;
+
+            // 3. Hitung subtotal dengan harga dari relasi
+            $subtotalHargaBaru = $hargaSatuan * (float)$produk->berat;
+
+            $terbilang = ucwords(trim($this->terbilang(abs($subtotalHargaBaru)))) . ' Rupiah';
 
             $keranjangBaru[] = KeranjangOfftake::create([
                 'kodetransaksi' => $kodeOfftake,
                 'produk_id'     => $produk->id,
-                'harga_jual'    => $produk->harga_jual,
+                'harga_jual'    => $hargaSatuan,
                 'berat'         => $produk->berat,
-                'karat'         => $produk->karat,
+                'karat'         => $nilaiKarat,
                 'lingkar'       => $produk->lingkar,
                 'panjang'       => $produk->panjang,
                 'total'         => $subtotalHargaBaru,

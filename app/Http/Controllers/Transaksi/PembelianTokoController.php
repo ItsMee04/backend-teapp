@@ -154,7 +154,7 @@ class PembelianTokoController extends Controller
     public function pilihProduk(Request $request)
     {
         // Cek produk_id valid di master produk
-        $produk = Produk::find($request->id);
+        $produk = Produk::with(['harga','karat'])->where('id',$request->id)->first();
         if (!$produk) {
             return response()->json([
                 'success' => false,
@@ -205,7 +205,7 @@ class PembelianTokoController extends Controller
             'kodepembelian' => $kodePembelian,
             'produk_id' => $request->id,
             'berat' => $produk->berat,
-            'karat' => $produk->karat,
+            'karat' => $produk->karat->karat,
             'lingkar' => $produk->lingkar,
             'panjang' => $produk->panjang,
             'oleh' => Auth::user()->id,
