@@ -196,19 +196,19 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     //API TRANSAKSI PENJUALAN
     Route::get('transaksi/getTransaksi', [TransaksiController::class, 'getTransaksi']);
-    Route::post('transaksi/batalTransaksi',[TransaksiController::class, 'batalTransaksi']);
+    Route::post('transaksi/batalTransaksi', [TransaksiController::class, 'batalTransaksi']);
     Route::get('/transaksi/{id}/get-signed-url-nota', [CetakBarcodeProduk::class, 'getSignedNotaUrl']);
 
     //API TRANSAKSI PEMBELIAN
     Route::get('pembelian/getPembelian', [PembelianController::class, 'getPembelian']);
-    Route::post('pembelian/batalTransaksi',[PembelianController::class, 'batalTransaksi']);
+    Route::post('pembelian/batalTransaksi', [PembelianController::class, 'batalTransaksi']);
     Route::get('/pembelian/{id}/get-signed-url-nota', [CetakBarcodeProduk::class, 'getSignedNotaPembelianUrl']);
 
     //API PERBAIKAN
     Route::get('perbaikan/kodePerbaikan', [PerbaikanController::class, 'kodePerbaikan']);
     Route::get('perbaikan/getPerbaikan', [PerbaikanController::class, 'getPerbaikan']);
-    Route::post('perbaikan/finalPerbaikan',[PerbaikanController::class, 'finalPerbaikan']);
-    Route::post('perbaikan/batalPerbaikan',[PerbaikanController::class, 'batalPerbaikan']);
+    Route::post('perbaikan/finalPerbaikan', [PerbaikanController::class, 'finalPerbaikan']);
+    Route::post('perbaikan/batalPerbaikan', [PerbaikanController::class, 'batalPerbaikan']);
 
     //API OFFTAKE
     Route::get('keranjangOfftake/getKeranjangOfftake', [KeranjangOfftakeController::class, 'getKeranjangOfftake']);
@@ -216,15 +216,20 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('keranjangOfftake/storeKeranjangOfftake', [KeranjangOfftakeController::class, 'storeKeranjangOfftake']);
     Route::delete('keranjangOfftake/deleteProduk/{id}', [KeranjangOfftakeController::class, 'deleteProduk']);
     Route::post('keranjangOfftake/submitTransaksiOfftake', [KeranjangOfftakeController::class, 'submitTransaksi']);
-    Route::get('offtake/getTransaksiOfftake',[OfftakeController::class, 'getTransaksiOfftake']);
+    Route::get('offtake/getTransaksiOfftake', [OfftakeController::class, 'getTransaksiOfftake']);
     Route::get('/offtake/{id}/get-signed-url-nota', [CetakBarcodeProduk::class, 'getSignedNotaOfftakeUrl']);
 
     // API SALDO
     Route::get('saldo/getSaldo', [SaldoController::class, 'getSaldo']);
+    Route::post('saldo/storeSaldo', [SaldoController::class, 'storeSaldo']);
+    Route::post('saldo/updateSaldo', [SaldoController::class, 'updateSaldo']);
+    Route::post('saldo/deleteSaldo', [SaldoController::class, 'deleteSaldo']);
 
     // API MUTASI SALDO
     Route::get('mutasisaldo/getMutasiSaldo', [MutasiSaldoController::class, 'getMutasiSaldo']);
     Route::post('mutasisaldo/storeMutasiSaldo', [MutasiSaldoController::class, 'storeMutasiSaldo']);
+    Route::post('mutasisaldo/updateMutasiSaldo', [MutasiSaldoController::class, 'updateMutasiSaldo']);
+    Route::post('mutasisaldo/cancelMutasiSaldo', [MutasiSaldoController::class, 'cancelMutasiSaldo']);
 
     //API STOK
     Route::get('stokharian/getPeriodeStok', [StokHarianController::class, 'getPeriodeStok']);;
@@ -240,10 +245,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     //LAPORAN
     Route::post('/rekappenjualan/get-signed-url-rekappenjualan', [CetakBarcodeProduk::class, 'getSignedRekapPenjualanUrl']);
-     Route::post('/rekappembelian/get-signed-url-rekappembelian', [CetakBarcodeProduk::class, 'getSignedRekapPembelianUrl']);
+    Route::post('/rekappembelian/get-signed-url-rekappembelian', [CetakBarcodeProduk::class, 'getSignedRekapPembelianUrl']);
 });
 
-Route::post('produk/getProdukByBarcode',[ProdukController::class, 'getProdukByBarcode']);
+Route::post('produk/getProdukByBarcode', [ProdukController::class, 'getProdukByBarcode']);
 Route::get('/produk/{id}/cetakbarcodeproduk', [CetakBarcodeProduk::class, 'PrintBarcodeProduk'])->name('produk.cetak_barcode'); // Nama route yang baru
 Route::get('/transaksi/{id}/cetaknotatransaksi', [CetakBarcodeProduk::class, 'PrintNotaTransaksi'])->name('produk.cetak_notatransaksi'); // Nama route yang baru
 Route::get('/pembelian/{id}/cetaknotapembelian', [CetakBarcodeProduk::class, 'PrintNotaPembelian'])->name('produk.cetak_notapembelian'); // Nama route yang baru

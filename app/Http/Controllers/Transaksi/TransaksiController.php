@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Transaksi;
 
 use Carbon\Carbon;
+use App\Models\Saldo;
 use App\Models\Produk;
 use App\Models\Keranjang;
 use App\Models\Transaksi;
+use App\Models\MutasiSaldo;
 use App\Models\NampanProduk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -139,25 +141,65 @@ class TransaksiController extends Controller
 
     public function konfirmasiPembayaran(Request $request)
     {
-        // Mengambil kodetransaksi dari request
+        // 1. Ambil kodetransaksi dari request
         $kodetransaksi = $request->kodetransaksi;
 
-        // Mencari transaksi berdasarkan kodetransaksi, bukan ID
+        // 2. Cari transaksi berdasarkan kodetransaksi
         $transaksi = Transaksi::where('kodetransaksi', $kodetransaksi)->first();
 
-        if ($transaksi) {
-            // Jika transaksi ditemukan, perbarui status
+        if (!$transaksi) {
+            return response()->json(['success' => false, 'message' => 'Transaksi tidak ditemukan'], 404);
+        }
+
+        // Cegah double konfirmasi
+        if ($transaksi->status == 2) {
+            return response()->json(['success' => false, 'message' => 'Transaksi ini sudah dikonfirmasi'], 400);
+        }
+
+        // 3. Set Rekening ID secara statis ke ID 1
+        $rekeningIdStatis = 1;
+        $rekening = Saldo::find($rekeningIdStatis);
+
+        if (!$rekening) {
+            return response()->json(['success' => false, 'message' => 'Rekening utama (ID 1) tidak ditemukan di database'], 404);
+        }
+
+        // Mulai Database Transaction
+        DB::beginTransaction();
+
+        try {
+            // 4. Update Status Transaksi
             $transaksi->status = 2;
             $transaksi->save();
 
+            // 5. Tambah Saldo ke Rekening ID 1
+            $rekening->total += $transaksi->total; // Pastikan field total_harga sesuai di tabel transaksi
+            $rekening->save();
+
+            // 6. Catat riwayat ke Mutasi Saldo
+            MutasiSaldo::create([
+                'saldo_id'   => $rekeningIdStatis,
+                'tanggal'    => now(),
+                'keterangan' => "Penjualan: " . $transaksi->kodetransaksi,
+                'jenis'      => 'masuk',
+                'jumlah'     => $transaksi->total,
+                'oleh'       => Auth::user()->id,
+                'status'     => 1
+            ]);
+
+            DB::commit();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Pembayaran Berhasil Dikonfirmasi',
-                'transaksi_id' => $transaksi->id // <-- ID Primary Key ditambahkan di sini
+                'message' => 'Pembayaran Dikonfirmasi, Saldo Rekening Utama Bertambah',
+                'transaksi_id' => $transaksi->id
             ]);
-        } else {
-            // Jika transaksi tidak ditemukan, kembalikan response error
-            return response()->json(['success' => false, 'message' => 'Transaksi tidak ditemukan'], 404);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal konfirmasi: ' . $e->getMessage()
+            ], 500);
         }
     }
 
