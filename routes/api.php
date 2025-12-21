@@ -20,6 +20,8 @@ use App\Http\Controllers\Pelanggan\PelangganController;
 use App\Http\Controllers\Pelanggan\TemplatePesanController;
 use App\Http\Controllers\Produk\JenisKaratController;
 use App\Http\Controllers\Produk\NampanProdukController;
+use App\Http\Controllers\Saldo\MutasiSaldoController;
+use App\Http\Controllers\Saldo\SaldoController;
 use App\Http\Controllers\Transaksi\PembelianController;
 use App\Http\Controllers\Transaksi\PerbaikanController;
 use App\Http\Controllers\Transaksi\TransaksiController;
@@ -216,6 +218,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('keranjangOfftake/submitTransaksiOfftake', [KeranjangOfftakeController::class, 'submitTransaksi']);
     Route::get('offtake/getTransaksiOfftake',[OfftakeController::class, 'getTransaksiOfftake']);
     Route::get('/offtake/{id}/get-signed-url-nota', [CetakBarcodeProduk::class, 'getSignedNotaOfftakeUrl']);
+
+    // API SALDO
+    Route::get('saldo/getSaldo', [SaldoController::class, 'getSaldo']);
+
+    // API MUTASI SALDO
+    Route::get('mutasisaldo/getMutasiSaldo', [MutasiSaldoController::class, 'getMutasiSaldo']);
+    Route::post('mutasisaldo/storeMutasiSaldo', [MutasiSaldoController::class, 'storeMutasiSaldo']);
 
     //API STOK
     Route::get('stokharian/getPeriodeStok', [StokHarianController::class, 'getPeriodeStok']);;
