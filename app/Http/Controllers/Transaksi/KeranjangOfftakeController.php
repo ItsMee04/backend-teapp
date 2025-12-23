@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Transaksi;
 
 use Carbon\Carbon;
+use App\Models\Saldo;
 use App\Models\Produk;
 use App\Models\Offtake;
 use App\Models\Keranjang;
+use App\Models\MutasiSaldo;
 use App\Models\NampanProduk;
 use Illuminate\Http\Request;
 use App\Models\KeranjangOfftake;
@@ -126,7 +128,7 @@ class KeranjangOfftakeController extends Controller
 
     public function getKeranjangOfftakeAktif()
     {
-        $offtake = KeranjangOfftake::with(['produk', 'user.pegawai', 'produk.karat','produk.harga'])
+        $offtake = KeranjangOfftake::with(['produk', 'user.pegawai', 'produk.karat', 'produk.harga'])
             ->where('oleh', Auth::user()->id)
             ->where('status', 1)
             ->get();
@@ -331,7 +333,8 @@ class KeranjangOfftakeController extends Controller
         $request->validate([
             'kodetransaksi' => 'required|string',
             'suplier'       => 'required',
-            'keterangan'    => 'nullable|string'
+            'keterangan'    => 'nullable|string',
+            'hargatotal'    => 'required|numeric'
         ]);
 
         $kodetransaksi = $request->kodetransaksi;
@@ -349,36 +352,68 @@ class KeranjangOfftakeController extends Controller
         }
 
         $total = $keranjang->sum('total');
-        $totalHarga = $request->hargatotal; // pakai kolom total langsung
+        $totalHarga = $request->hargatotal;
         $angka = abs($totalHarga);
         $terbilang = ucwords(trim($this->terbilang($angka))) . ' Rupiah';
 
-        $offtake = Offtake::where('kodetransaksi', $kodetransaksi)
-            ->where('status', 1)
-            ->update([
-                "suplier_id"    => $request->suplier,
-                "total"         => $total,
-                "hargatotal"    => $request->hargatotal,
-                "terbilang"     => $terbilang,
-                "pembayaran"    => $request->pembayaran,
-                "keterangan"    => toUpper($request->keterangan),
-                "status"        => 2, // status 2 artinya sudah selesai / tidak aktif
+        // Gunakan Transaction agar data tetap sinkron
+        DB::beginTransaction();
+
+        try {
+            // 1. Update data Offtake
+            Offtake::where('kodetransaksi', $kodetransaksi)
+                ->where('status', 1)
+                ->update([
+                    "suplier_id"    => $request->suplier,
+                    "total"         => $total,
+                    "hargatotal"    => $request->hargatotal,
+                    "terbilang"     => $terbilang,
+                    "pembayaran"    => $request->pembayaran,
+                    "keterangan"    => strtoupper($request->keterangan),
+                    "status"        => 2,
+                ]);
+
+            // 2. Update status keranjang jadi selesai (2)
+            KeranjangOfftake::where('kodetransaksi', $kodetransaksi)
+                ->where('status', 1)
+                ->update(['status' => 2]);
+
+            // 3. PENAMBAHAN SALDO (Statis Rekening ID 1)
+            $rekeningIdStatis = 1;
+            $rekening = Saldo::find($rekeningIdStatis);
+
+            if ($rekening) {
+                // Karena ini pemasukan, maka saldo bertambah (+=)
+                $rekening->total += $totalHarga;
+                $rekening->save();
+
+                // 4. Catat ke Mutasi Saldo sebagai "masuk"
+                MutasiSaldo::create([
+                    'saldo_id'   => $rekeningIdStatis,
+                    'tanggal'    => now(),
+                    'keterangan' => "Pemasukan Offtake: " . $kodetransaksi,
+                    'jenis'      => 'masuk',
+                    'jumlah'     => $totalHarga,
+                    'oleh'       => Auth::user()->id,
+                    'status'     => 1
+                ]);
+            }
+
+            DB::commit();
+
+            $offtake = Offtake::where('kodetransaksi', $kodetransaksi)->first();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pembelian/Offtake berhasil disimpan dan saldo bertambah',
+                'data' => $offtake
             ]);
-
-        // Ambil data pembelian yang baru diupdate
-        $offtake = Offtake::where('kodetransaksi', $kodetransaksi)
-            ->where('status', 2)
-            ->first();
-
-        // Update semua keranjang jadi status 2
-        KeranjangOfftake::where('kodetransaksi', $kodetransaksi)
-            ->where('status', 1)
-            ->update(['status' => 2]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Pembelian berhasil disimpan',
-            'data' => $offtake
-        ]);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memproses transaksi: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

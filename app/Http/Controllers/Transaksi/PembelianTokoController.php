@@ -3,17 +3,19 @@
 namespace App\Http\Controllers\Transaksi;
 
 use Carbon\Carbon;
+use App\Models\Saldo;
 use App\Models\Produk;
 use App\Models\Pembelian;
 use App\Models\Perbaikan;
+use App\Models\MutasiSaldo;
 use Illuminate\Http\Request;
 use App\Models\KeranjangPembelian;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\Transaksi\PerbaikanController;
 
+use Illuminate\Support\Facades\Auth;
 use function PHPUnit\Framework\isEmpty;
+use App\Http\Controllers\Transaksi\PerbaikanController;
 
 class PembelianTokoController extends Controller
 {
@@ -154,7 +156,7 @@ class PembelianTokoController extends Controller
     public function pilihProduk(Request $request)
     {
         // Cek produk_id valid di master produk
-        $produk = Produk::with(['harga','karat'])->where('id',$request->id)->first();
+        $produk = Produk::with(['harga', 'karat'])->where('id', $request->id)->first();
         if (!$produk) {
             return response()->json([
                 'success' => false,
@@ -311,52 +313,82 @@ class PembelianTokoController extends Controller
             ]);
         }
 
-        $totalHarga = $keranjang->sum('total'); // pakai kolom total langsung
-
+        $totalHarga = $keranjang->sum('total');
         $angka = abs($totalHarga);
         $terbilang = ucwords(trim($this->terbilang($angka))) . ' Rupiah';
 
-        $pembelian = Pembelian::where('kodepembelian', $kodepembelian)
-            ->where('status', 1)
-            ->update([
-                "total" => $totalHarga,
-                "terbilang" => $terbilang,
-                "catatan" => $request->catatan,
-                "status" => 2, // status 2 artinya sudah selesai / tidak aktif
-            ]);
+        // Gunakan Database Transaction untuk keamanan data
+        DB::beginTransaction();
 
-        // Ambil data pembelian yang baru diupdate
-        $pembelian = Pembelian::where('kodepembelian', $kodepembelian)
-            ->where('status', 2)
-            ->first();
+        try {
+            // 1. Update data Pembelian
+            Pembelian::where('kodepembelian', $kodepembelian)
+                ->where('status', 1)
+                ->update([
+                    "total" => $totalHarga,
+                    "terbilang" => $terbilang,
+                    "catatan" => $request->catatan,
+                    "status" => 2,
+                ]);
 
-        // Update semua keranjang jadi status 2
-        KeranjangPembelian::where('kodepembelian', $kodepembelian)
-            ->where('status', 1)
-            ->update(['status' => 2]);
+            // 2. Update semua keranjang jadi status 2
+            KeranjangPembelian::where('kodepembelian', $kodepembelian)
+                ->where('status', 1)
+                ->update(['status' => 2]);
 
-        $kodeperbaikan = (new PerbaikanController)->kodePerbaikan();
-        // Insert ke perbaikan jika kondisi_id 1
-        foreach ($keranjang as $item) {
-            // Jika kondisi 1 → masuk proses pencucian
-            if ($item->kondisi_id == 1) {
-                Perbaikan::create([
-                    'kodeperbaikan' => $kodeperbaikan,
-                    'produk_id'     => $item->produk_id,
-                    'kondisi_id'    => $item->kondisi_id,
-                    'tanggalmasuk'  => Carbon::now(),
-                    'status'        => 1,
-                    'oleh'          => Auth::id(),
-                    'keterangan'    => 'Produk masuk pencucian',
+            // 3. LOGIKA PENGURANGAN SALDO (Statis Rekening ID 1)
+            $rekeningIdStatis = 1;
+            $rekening = Saldo::find($rekeningIdStatis);
+
+            if ($rekening) {
+                // Karena toko membeli (mengeluarkan uang), saldo berkurang (-=)
+                $rekening->total -= $totalHarga;
+                $rekening->save();
+
+                // 4. Catat ke Mutasi Saldo sebagai "keluar"
+                MutasiSaldo::create([
+                    'saldo_id'   => $rekeningIdStatis,
+                    'tanggal'    => now(),
+                    'keterangan' => "Pembelian Produk dari toko: " . $kodepembelian,
+                    'jenis'      => 'keluar',
+                    'jumlah'     => $totalHarga,
+                    'oleh'       => Auth::id(),
+                    'status'     => 1
                 ]);
             }
-        }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Pembelian berhasil disimpan',
-            'data' => $pembelian
-        ]);
+            // 5. Logika Perbaikan (Pencucian)
+            $kodeperbaikan = (new PerbaikanController)->kodePerbaikan();
+            foreach ($keranjang as $item) {
+                if ($item->kondisi_id == 1) {
+                    Perbaikan::create([
+                        'kodeperbaikan' => $kodeperbaikan,
+                        'produk_id'     => $item->produk_id,
+                        'kondisi_id'    => $item->kondisi_id,
+                        'tanggalmasuk'  => \Carbon\Carbon::now(),
+                        'status'        => 1,
+                        'oleh'          => Auth::id(),
+                        'keterangan'    => 'Produk masuk pencucian',
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            $pembelian = Pembelian::where('kodepembelian', $kodepembelian)->first();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pembelian berhasil disimpan dan saldo berkurang',
+                'data' => $pembelian
+            ]);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memproses pembelian: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function batalPembelian(Request $request)
