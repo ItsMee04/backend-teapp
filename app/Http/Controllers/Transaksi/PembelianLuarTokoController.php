@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Transaksi;
 
 use Log;
 use Carbon\Carbon;
+use App\Models\Saldo;
 use App\Models\Produk;
 use Milon\Barcode\DNS1D;
 use App\Models\Pembelian;
 use App\Models\Perbaikan;
+use App\Models\MutasiSaldo;
 use Illuminate\Http\Request;
 use App\Models\KeranjangPembelian;
 use Illuminate\Support\Facades\DB;
@@ -59,15 +61,24 @@ class PembelianLuarTokoController extends Controller
 
     public function storeProduk(Request $request)
     {
+        $messages = [
+            'required' => ':attribute wajib di isi !!!',
+            'integer'  => ':attribute format wajib menggunakan angka',
+            'numeric'  => ':attribute format wajib menggunakan angka',
+            'exists'   => ':attribute yang dipilih tidak valid atau tidak ditemukan !!!',
+            'mimes'    => ':attribute format wajib menggunakan PNG/JPG'
+        ];
+
         // 1. Validasi Input
         $request->validate([
             'jenis'             => 'required|exists:jenis_produk,id',
             'nama'              => 'required|string',
-            'hargabeli'         => 'required|numeric',
+            'hargabeli'         => 'required|integer',
             'berat'             => 'required|numeric',
-            'karat'             => 'nullable|string',
-            'lingkar'           => 'nullable|string',
-            'panjang'           => 'nullable|string',
+            'karat'             => 'required|exists:karat,id',
+            'jeniskarat'        => 'required|exists:jenis_karat,id',
+            'lingkar'           => 'nullable|integer',
+            'panjang'           => 'nullable|integer',
             'keterangan'        => 'nullable|string',
             'kondisi'           => 'required|exists:kondisi,id',
         ]);
@@ -94,15 +105,17 @@ class PembelianLuarTokoController extends Controller
             // A.2 Simpan ke master produk (Status = 0: belum aktif)
             $produk = Produk::create([
                 'kodeproduk'    => $kodeProduk,
-                'jenisproduk_id' => $request->jenis,
                 'nama'          => toUpper($request->nama),
-                'harga_beli'    => $request->hargabeli,
                 'berat'         => $request->berat,
-                'karat'         => $request->karat,
+                'jenisproduk_id' => $request->jenis,
+                'karat_id'      => $request->karat,
+                'jenis_karat_id' => $request->jeniskarat,
+                'kondisi_id'    => $request->kondisi,
+                'harga_jual'    => $request->hargajual,
+                'harga_beli'    => $request->hargabeli,
                 'lingkar'       => $request->lingkar ?? 0,
                 'panjang'       => $request->panjang ?? 0,
                 'keterangan'    => toUpper($request->keterangan),
-                'kondisi_id'    => $request->kondisi,
                 'status'        => 0,
             ]);
 
@@ -130,6 +143,10 @@ class PembelianLuarTokoController extends Controller
                 $kodePembelian = $activePembelian->kodepembelian;
             }
 
+            $produkTerpilih = Produk::where('kodeproduk', $produk->kodeproduk)
+                ->with(['karat', 'harga'])
+                ->first();
+
             // Hitung total dan terbilang
             $total = $produk->berat * $produk->harga_beli;
             $terbilang = ucwords($this->terbilang($total)) . ' Rupiah';
@@ -137,18 +154,18 @@ class PembelianLuarTokoController extends Controller
             // Simpan ke keranjang pembelian (SAMA UNTUK KONDISI 1 & 2)
             $keranjang = KeranjangPembelian::create([
                 'kodepembelian'     => $kodePembelian,
-                'produk_id'         => $produk->id,
-                'kondisi_id'        => $produk->kondisi_id,
-                'jenisproduk_id'    => $produk->jenisproduk_id,
-                'nama'              => toUpper($produk->nama),
-                'harga_beli'        => $produk->harga_beli,
-                'berat'             => $produk->berat,
-                'karat'             => $produk->karat,
-                'lingkar'           => $produk->lingkar ?? 0,
-                'panjang'           => $produk->panjang ?? 0,
+                'produk_id'         => $produkTerpilih->id,
+                'nama'              => toUpper($produkTerpilih->nama),
+                'berat'             => $produkTerpilih->berat,
+                'jenisproduk_id'    => $produkTerpilih->jenisproduk_id,
+                'karat'             => $produkTerpilih->karat->karat,
+                'kondisi_id'        => $produkTerpilih->kondisi_id,
+                'harga_beli'        => $produkTerpilih->harga_beli,
+                'lingkar'           => $produkTerpilih->lingkar ?? 0,
+                'panjang'           => $produkTerpilih->panjang ?? 0,
                 'total'             => $total,
                 'terbilang'         => $terbilang,
-                'keterangan'        => $produk->keterangan,
+                'keterangan'        => $produkTerpilih->keterangan,
                 'oleh'              => Auth::user()->id,
                 'status'            => 1, // aktif di keranjang
                 'jenis_pembelian'   => 'luartoko',
@@ -166,9 +183,9 @@ class PembelianLuarTokoController extends Controller
 
                 $perbaikan = Perbaikan::create([
                     'kodeperbaikan' => $kodePerbaikan,
-                    'produk_id'     => $produk->id,
+                    'produk_id'     => $produkTerpilih->id,
                     'tanggalmasuk'  => Carbon::now(),
-                    'kondisi_id'    => $produk->kondisi_id,
+                    'kondisi_id'    => $produkTerpilih->kondisi_id,
                     'keterangan'    => 'Produk masuk pencucian',
                     'status'        => 1, // aktif di perbaikan (sedang diproses)
                     'oleh'          => Auth::user()->id,
@@ -182,9 +199,9 @@ class PembelianLuarTokoController extends Controller
 
                 $perbaikan = Perbaikan::create([
                     'kodeperbaikan' => $kodePerbaikan,
-                    'produk_id'     => $produk->id,
+                    'produk_id'     => $produkTerpilih->id,
                     'tanggalmasuk'  => Carbon::now(),
-                    'kondisi_id'    => $produk->kondisi_id,
+                    'kondisi_id'    => $produkTerpilih->kondisi_id,
                     'keterangan'    => 'Produk di lebur', // Diubah menjadi 'Produk di lebur'
                     'status'        => 2, // Diubah menjadi status 2 (Dilebur/Selesai)
                     'oleh'          => Auth::user()->id,
@@ -198,7 +215,7 @@ class PembelianLuarTokoController extends Controller
             return response()->json([
                 'success'   => true,
                 'message'   => $message,
-                'produk'    => $produk,
+                'produk'    => $produkTerpilih,
                 'keranjang' => $keranjang,
                 'pembelian' => $activePembelian,
                 'perbaikan' => $perbaikan,
@@ -208,16 +225,25 @@ class PembelianLuarTokoController extends Controller
 
     public function updateProduk(Request $request, $id)
     {
+        $messages = [
+            'required' => ':attribute wajib di isi !!!',
+            'integer'  => ':attribute format wajib menggunakan angka',
+            'exists'   => ':attribute yang dipilih tidak valid atau tidak ditemukan !!!',
+            'mimes'    => ':attribute format wajib menggunakan PNG/JPG'
+        ];
+
+        // 1. Validasi Input
         $request->validate([
-            'jenis'      => 'required|exists:jenis_produk,id',
-            'nama'       => 'required|string',
-            'hargabeli'  => 'required|numeric',
-            'berat'      => 'required|numeric',
-            'karat'      => 'nullable|string',
-            'lingkar'    => 'nullable|string',
-            'panjang'    => 'nullable|string',
-            'keterangan' => 'nullable|string',
-            'kondisi'    => 'required|exists:kondisi,id',
+            'jenis'             => 'required|exists:jenis_produk,id',
+            'nama'              => 'required|string',
+            'hargabeli'         => 'required|integer',
+            'berat'             => 'required|integer',
+            'karat'             => 'required|exists:karat,id',
+            'jeniskarat'        => 'required|exists:jenis_karat,id',
+            'lingkar'           => 'nullable|integer',
+            'panjang'           => 'nullable|integer',
+            'keterangan'        => 'nullable|string',
+            'kondisi'           => 'required|exists:kondisi,id',
         ]);
 
         return DB::transaction(function () use ($request, $id) {
@@ -248,15 +274,17 @@ class PembelianLuarTokoController extends Controller
 
             // Simpan kondisi baru dan data lainnya ke master produk
             $produk->update([
-                'jenisproduk_id' => $request->jenis,
                 'nama'           => toUpper($request->nama),
-                'harga_beli'     => $request->hargabeli,
                 'berat'          => $request->berat,
-                'karat'          => $request->karat,
+                'jenisproduk_id' => $request->jenis,
+                'karat_id'       => $request->karat,
+                'jenis_karat_id' => $request->jeniskarat,
+                'kondisi_id'     => $kondisiBaru,
                 'lingkar'        => $request->lingkar ?? 0,
                 'panjang'        => $request->panjang ?? 0,
-                'keterangan'     => toUpper($request->keterangan),
-                'kondisi_id'     => $kondisiBaru, // Update kondisi produk master
+                'harga_beli'     => $request->hargabeli,
+                'harga_jual'     => $request->hargajual,
+                'keterangan'     => toUpper($request->keterangan), // Update kondisi produk master
             ]);
 
             // ----- LOGIKA PERBAIKAN DINAMIS -----
@@ -428,37 +456,68 @@ class PembelianLuarTokoController extends Controller
             ]);
         }
 
-        $totalHarga = $keranjang->sum('total'); // pakai kolom total langsung
+        $totalHarga = $keranjang->sum('total');
         $terbilang = ucwords(trim($this->terbilang(abs($totalHarga)))) . ' Rupiah';
 
-        // Update pembelian (termasuk pelanggan_id & suplier_id)
-        $updateData = [
-            "total"        => $totalHarga,
-            "terbilang"    => $terbilang,
-            "catatan"      => toUpper($request->catatan),
-            "status"       => 2, // sudah selesai
-            "pelanggan_id" => $request->pelanggan_id ?? null,
-            "suplier_id"   => $request->suplier_id ?? null,
-        ];
+        // Mulai Transaksi Database
+        DB::beginTransaction();
 
-        Pembelian::where('kodepembelian', $kodepembelian)
-            ->where('status', 1)
-            ->update($updateData);
+        try {
+            // 1. Update data Pembelian
+            $updateData = [
+                "total"        => $totalHarga,
+                "terbilang"    => $terbilang,
+                "catatan"      => strtoupper($request->catatan), // Pastikan helper toUpper benar atau gunakan strtoupper
+                "status"       => 2,
+                "pelanggan_id" => $request->pelanggan_id ?? null,
+                "suplier_id"   => $request->suplier_id ?? null,
+            ];
 
-        // Ambil data pembelian terbaru
-        $pembelian = Pembelian::where('kodepembelian', $kodepembelian)
-            ->where('status', 2)
-            ->first();
+            Pembelian::where('kodepembelian', $kodepembelian)
+                ->where('status', 1)
+                ->update($updateData);
 
-        // Update status keranjang
-        KeranjangPembelian::where('kodepembelian', $kodepembelian)
-            ->where('status', 1)
-            ->update(['status' => 2]);
+            // 2. Update status keranjang jadi selesai (2)
+            KeranjangPembelian::where('kodepembelian', $kodepembelian)
+                ->where('status', 1)
+                ->update(['status' => 2]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Pembelian berhasil disimpan',
-            'data'    => $pembelian
-        ]);
+            // 3. LOGIKA PENGURANGAN SALDO (Statis Rekening ID 1)
+            $rekeningIdStatis = 1;
+            $rekening = Saldo::find($rekeningIdStatis);
+
+            if ($rekening) {
+                // Toko mengeluarkan uang, maka saldo dikurangi (-=)
+                $rekening->total -= $totalHarga;
+                $rekening->save();
+
+                // 4. Catat riwayat ke Mutasi Saldo sebagai "keluar"
+                MutasiSaldo::create([
+                    'saldo_id'   => $rekeningIdStatis,
+                    'tanggal'    => now(),
+                    'keterangan' => "Pembelian Barang (Kode: $kodepembelian)",
+                    'jenis'      => 'keluar',
+                    'jumlah'     => $totalHarga,
+                    'oleh'       => Auth::id(),
+                    'status'     => 1
+                ]);
+            }
+
+            DB::commit();
+
+            $pembelian = Pembelian::where('kodepembelian', $kodepembelian)->first();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pembelian berhasil disimpan dan saldo berkurang',
+                'data'    => $pembelian
+            ]);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan pembelian: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
