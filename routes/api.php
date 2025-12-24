@@ -16,6 +16,7 @@ use App\Http\Controllers\Stok\StokBulananController;
 use App\Http\Controllers\Transaksi\OfftakeController;
 use App\Http\Controllers\Produk\JenisProdukController;
 use App\Http\Controllers\Authentication\AuthController;
+use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Pelanggan\PelangganController;
 use App\Http\Controllers\Pelanggan\TemplatePesanController;
 use App\Http\Controllers\Produk\JenisKaratController;
@@ -53,6 +54,20 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::get('dashboard/getTotalSaldoMasuk', [DashboardController::class, 'getTotalSaldoMasuk']);
+    Route::get('dashboard/getTotalSaldoKeluar', [DashboardController::class, 'getTotalSaldoKeluar']);
+    Route::get('dashboard/getTotalPenjualanMasuk', [DashboardController::class, 'getTotalPenjualanMasuk']);
+    Route::get('dashboard/getTotalPenjualanKeluar', [DashboardController::class, 'getTotalPenjualanKeluar']);
+    Route::get('dashboard/getTotalPelanggan', [DashboardController::class, 'getTotalPelanggan']);
+    Route::get('dashboard/getTotalSuplier', [DashboardController::class, 'getTotalSuplier']);
+    Route::get('dashboard/getTotalPenjualan', [DashboardController::class, 'getTotalPenjualan']);
+    Route::get('dashboard/getTotalPembelian', [DashboardController::class, 'getTotalPembelian']);
+    Route::get('dashboard/getSalesChart', [DashboardController::class, 'getSalesChart']);
+    Route::get('dashboard/getSalesChartPembelian', [DashboardController::class, 'getSalesChartPembelian']);
+    Route::get('dashboard/getProdukTerlaris', [DashboardController::class, 'getProdukTerlaris']);
+    Route::get('dashboard/getHargaEmas', [DashboardController::class, 'getHargaEmas']);
+
 
     Route::get('jabatan/getJabatan', [JabatanController::class, 'getJabatan']);
     Route::post('jabatan/storeJabatan', [JabatanController::class, 'storeJabatan']);
