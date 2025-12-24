@@ -20,46 +20,26 @@ return new class extends Migration
         CREATE PROCEDURE CetakRekapTransaksiHarian(IN TANGGAL_INPUT DATE)
             BEGIN
                 SELECT
-                    /* ================= ANTING ================= */
-                    COUNT(CASE WHEN jp.jenis_produk = 'ANTING' THEN 1 END) AS anting_qty,
-                    SUM(CASE WHEN jp.jenis_produk = 'ANTING' THEN k.berat ELSE 0 END) AS anting_gr,
-                    SUM(CASE WHEN jp.jenis_produk = 'ANTING' THEN k.harga_jual ELSE 0 END) AS anting_rp,
+                    tr.tanggal,
+                    tr.kodetransaksi,
+                    jp.jenis_produk,
+                    pr.kodeproduk,
+                    pr.berat,
+                    k.karat,
+                    kr.harga_jual AS harga,
 
-                    /* ================= CINCIN ================= */
-                    COUNT(CASE WHEN jp.jenis_produk = 'CINCIN' THEN 1 END) AS cincin_qty,
-                    SUM(CASE WHEN jp.jenis_produk = 'CINCIN' THEN k.berat ELSE 0 END) AS cincin_gr,
-                    SUM(CASE WHEN jp.jenis_produk = 'CINCIN' THEN k.harga_jual ELSE 0 END) AS cincin_rp,
+                    /* Menghitung TOTAL menggunakan Window Function */
+                    SUM(pr.berat) OVER() AS TOTALBERAT,
+                    SUM(kr.harga_jual) OVER() AS TOTALHARGA,
+                    COUNT(*) OVER() AS TOTALPOTONG
 
-                    /* ================= GELANG ================= */
-                    COUNT(CASE WHEN jp.jenis_produk = 'GELANG' THEN 1 END) AS gelang_qty,
-                    SUM(CASE WHEN jp.jenis_produk = 'GELANG' THEN k.berat ELSE 0 END) AS gelang_gr,
-                    SUM(CASE WHEN jp.jenis_produk = 'GELANG' THEN k.harga_jual ELSE 0 END) AS gelang_rp,
-
-                    /* ================= KALUNG ================= */
-                    COUNT(CASE WHEN jp.jenis_produk = 'KALUNG' THEN 1 END) AS kalung_qty,
-                    SUM(CASE WHEN jp.jenis_produk = 'KALUNG' THEN k.berat ELSE 0 END) AS kalung_gr,
-                    SUM(CASE WHEN jp.jenis_produk = 'KALUNG' THEN k.harga_jual ELSE 0 END) AS kalung_rp,
-
-                    /* ================= LIONTIN ================= */
-                    COUNT(CASE WHEN jp.jenis_produk = 'LIONTIN' THEN 1 END) AS liontin_qty,
-                    SUM(CASE WHEN jp.jenis_produk = 'LIONTIN' THEN k.berat ELSE 0 END) AS liontin_gr,
-                    SUM(CASE WHEN jp.jenis_produk = 'LIONTIN' THEN k.harga_jual ELSE 0 END) AS liontin_rp,
-
-                    /* ================= SUBENG ================= */
-                    COUNT(CASE WHEN jp.jenis_produk = 'SUBENG' THEN 1 END) AS subeng_qty,
-                    SUM(CASE WHEN jp.jenis_produk = 'SUBENG' THEN k.berat ELSE 0 END) AS subeng_gr,
-                    SUM(CASE WHEN jp.jenis_produk = 'SUBENG' THEN k.harga_jual ELSE 0 END) AS subeng_rp,
-
-                    /* ================= TOTAL KESELURUHAN ================= */
-                    COUNT(*) AS total_qty,
-                    SUM(k.berat) AS total_gr,
-                    SUM(k.harga_jual) AS total_rp
-
-                FROM transaksi t
-                JOIN keranjang k ON t.kodetransaksi = k.kodetransaksi
-                JOIN produk p ON k.produk_id = p.id
-                JOIN jenis_produk jp ON p.jenisproduk_id = jp.id
-                WHERE DATE(t.tanggal) = TANGGAL_INPUT;
+                FROM keranjang kr
+                JOIN transaksi tr ON kr.kodetransaksi = tr.kodetransaksi
+                JOIN produk pr ON kr.produk_id = pr.id
+                JOIN jenis_produk jp ON pr.jenisproduk_id = jp.id
+                JOIN karat k ON pr.karat_id = k.id
+                WHERE tr.status = 2
+                AND DATE(tr.tanggal) = TANGGAL_INPUT;
             END
         ");
     }
