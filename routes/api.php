@@ -261,6 +261,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     //LAPORAN
     Route::post('/rekappenjualan/get-signed-url-rekappenjualan', [CetakBarcodeProduk::class, 'getSignedRekapPenjualanUrl']);
     Route::post('/rekappembelian/get-signed-url-rekappembelian', [CetakBarcodeProduk::class, 'getSignedRekapPembelianUrl']);
+    Route::post('/laporan/get-signed-url-laporanstok', [CetakBarcodeProduk::class, 'getSignedLaporanStok']);
 });
 
 Route::post('produk/getProdukByBarcode', [ProdukController::class, 'getProdukByBarcode']);
@@ -270,4 +271,5 @@ Route::get('/pembelian/{id}/cetaknotapembelian', [CetakBarcodeProduk::class, 'Pr
 Route::get('/offtake/{id}/cetaknotaofftake', [CetakBarcodeProduk::class, 'PrintNotaOfftake'])->name('produk.cetak_notaofftake'); // Nama route yang baru
 Route::get('/rekappenjualan/cetakrekappenjualan', [CetakBarcodeProduk::class, 'PrintRekapPenjualan'])->name('produk.cetak_rekappenjualan'); // Nama route yang baru
 Route::get('/rekappembelian/cetakrekappembelian', [CetakBarcodeProduk::class, 'PrintRekapPembelian'])->name('produk.cetak_rekappembelian'); // Nama route yang baru
+Route::get('/laporan/cetaklaporanstok', [CetakBarcodeProduk::class, 'PrintLaporanStok'])->name('produk.cetak_laporanstok'); // Nama route yang baru
 Route::post('/compile/reports', [CetakBarcodeProduk::class, 'CompileReports']);
