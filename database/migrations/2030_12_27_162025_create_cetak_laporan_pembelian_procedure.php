@@ -12,35 +12,37 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::unprepared("
-            DROP PROCEDURE IF EXISTS CetakRekapTransaksiHarian;
-        ");
+        DB::unprepared("DROP PROCEDURE IF EXISTS CetakLaporanPembelian;");
 
         DB::unprepared("
-        CREATE PROCEDURE CetakRekapTransaksiHarian(IN TANGGAL_INPUT DATE)
+            CREATE PROCEDURE CetakLaporanPembelian(
+                IN TANGGAL_AWAL DATE,
+                IN TANGGAL_AKHIR DATE
+            )
             BEGIN
                 SELECT
-                    tr.tanggal,
-                    tr.kodetransaksi,
+                    pm.tanggal,
+                    pm.kodepembelian,
                     jp.jenis_produk,
                     pr.kodeproduk,
                     pr.berat,
                     k.karat,
-                    kr.harga_jual AS harga,
+                    kp.harga_beli AS harga,
 
                     /* Menghitung TOTAL menggunakan Window Function */
                     SUM(pr.berat) OVER() AS TOTALBERAT,
-                    SUM(kr.harga_jual) OVER() AS TOTALHARGA,
+                    SUM(kp.harga_beli) OVER() AS TOTALHARGA,
                     COUNT(*) OVER() AS TOTALPOTONG
 
-                FROM keranjang kr
-                JOIN transaksi tr ON kr.kodetransaksi = tr.kodetransaksi
-                JOIN produk pr ON kr.produk_id = pr.id
+                FROM pembelian pm
+                JOIN keranjang_pembelian kp ON pm.kodepembelian = kp.kodepembelian
+                JOIN produk pr ON kp.produk_id = pr.id
                 JOIN jenis_produk jp ON pr.jenisproduk_id = jp.id
                 JOIN karat k ON pr.karat_id = k.id
-                WHERE tr.status = 2
-                AND DATE(tr.tanggal) = TANGGAL_INPUT;
-            END
+
+                WHERE pm.status = 2
+                AND DATE(pm.tanggal) BETWEEN TANGGAL_AWAL AND TANGGAL_AKHIR;
+            END;
         ");
     }
 
@@ -49,6 +51,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::unprepared('DROP PROCEDURE IF EXISTS CetakRekapTransaksiHarian');
+        DB::unprepared('DROP PROCEDURE IF EXISTS CetakLaporanPembelian');
     }
 };

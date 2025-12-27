@@ -13,11 +13,14 @@ return new class extends Migration
     public function up(): void
     {
         // 1. Drop procedure jika sudah ada
-        DB::unprepared("DROP PROCEDURE IF EXISTS GetLaporanStokBulanan;");
+        DB::unprepared("DROP PROCEDURE IF EXISTS CetakLaporanStok;");
 
         // 2. Create procedure dengan query utuh
         DB::unprepared("
-            CREATE PROCEDURE GetLaporanStokBulanan(IN p_bulan INT, IN p_tahun INT)
+            CREATE PROCEDURE CetakLaporanStok(
+                IN TANGGAL_AWAL DATE,
+                IN TANGGAL_AKHIR DATE
+            )
             BEGIN
                 SELECT
                     tgl,
@@ -26,7 +29,7 @@ return new class extends Migration
                     gelang_awal_pt, gelang_awal_gr, kalung_awal_pt, kalung_awal_gr,
                     liontin_awal_pt, liontin_awal_gr, subeng_awal_pt, subeng_awal_gr,
 
-                    -- [TAMBAHAN] TOTAL STOK AWAL GABUNGAN
+                    -- TOTAL STOK AWAL GABUNGAN
                     (anting_awal_pt + cincin_awal_pt + gelang_awal_pt + kalung_awal_pt + liontin_awal_pt + subeng_awal_pt) AS total_awal_pt,
                     (anting_awal_gr + cincin_awal_gr + gelang_awal_gr + kalung_awal_gr + liontin_awal_gr + subeng_awal_gr) AS total_awal_gr,
 
@@ -35,7 +38,7 @@ return new class extends Migration
                     gelang_pt_in, gelang_gr_in, kalung_pt_in, kalung_gr_in,
                     liontin_pt_in, liontin_gr_in, subeng_pt_in, subeng_gr_in,
 
-                    -- [TAMBAHAN] TOTAL MASUK GABUNGAN
+                    -- TOTAL MASUK GABUNGAN
                     (anting_pt_in + cincin_pt_in + gelang_pt_in + kalung_pt_in + liontin_pt_in + subeng_pt_in) AS total_pt_in,
                     (anting_gr_in + cincin_gr_in + gelang_gr_in + kalung_gr_in + liontin_gr_in + subeng_gr_in) AS total_gr_in,
 
@@ -44,7 +47,7 @@ return new class extends Migration
                     gelang_pt_out, gelang_gr_out, kalung_pt_out, kalung_gr_out,
                     liontin_pt_out, liontin_gr_out, subeng_pt_out, subeng_gr_out,
 
-                    -- [TAMBAHAN] TOTAL KELUAR GABUNGAN
+                    -- TOTAL KELUAR GABUNGAN
                     (anting_pt_out + cincin_pt_out + gelang_pt_out + kalung_pt_out + liontin_pt_out + subeng_pt_out) AS total_pt_out,
                     (anting_gr_out + cincin_gr_out + gelang_gr_out + kalung_gr_out + liontin_gr_out + subeng_gr_out) AS total_gr_out,
 
@@ -56,7 +59,7 @@ return new class extends Migration
                     (liontin_awal_pt - liontin_pt_out) AS liontin_pt_akhir, (liontin_awal_gr - liontin_gr_out) AS liontin_gr_akhir,
                     (subeng_awal_pt - subeng_pt_out) AS subeng_pt_akhir, (subeng_awal_gr - subeng_gr_out) AS subeng_gr_akhir,
 
-                    -- 5. TOTAL AKHIR GABUNGAN (Total Awal - Total Keluar)
+                    -- 5. TOTAL AKHIR GABUNGAN
                     ((anting_awal_pt + cincin_awal_pt + gelang_awal_pt + kalung_awal_pt + liontin_awal_pt + subeng_awal_pt) -
                     (anting_pt_out + cincin_pt_out + gelang_pt_out + kalung_pt_out + liontin_pt_out + subeng_pt_out)) AS total_pt_akhir,
 
@@ -119,7 +122,10 @@ return new class extends Migration
                         FROM jenis_produk jp2
                         LEFT JOIN produk p2 ON jp2.id = p2.jenisproduk_id AND p2.status != 0
                     ) AS S
-                    WHERE MONTH(np.tanggal) = p_bulan AND YEAR(np.tanggal) = p_tahun
+
+                    /* PERUBAHAN DI SINI: Menggunakan Range Tanggal */
+                    WHERE DATE(np.tanggal) BETWEEN TANGGAL_AWAL AND TANGGAL_AKHIR
+
                     GROUP BY
                         DATE(np.tanggal),
                         S.anting_awal_pt, S.anting_awal_gr, S.cincin_awal_pt, S.cincin_awal_gr,
@@ -136,6 +142,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::unprepared('DROP PROCEDURE IF EXISTS GetLaporanStokBulanan');
+        DB::unprepared('DROP PROCEDURE IF EXISTS CetakLaporanStok');
     }
 };

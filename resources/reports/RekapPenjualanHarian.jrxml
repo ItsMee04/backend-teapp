@@ -30,9 +30,10 @@
 			<rightPen lineWidth="0.5" lineColor="#000000"/>
 		</box>
 	</style>
-	<parameter name="TANGGAL_INPUT" class="java.lang.String"/>
+	<parameter name="TANGGAL_AWAL" class="java.lang.String"/>
+	<parameter name="TANGGAL_AKHIR" class="java.lang.String"/>
 	<queryString language="SQL">
-		<![CDATA[call CetakRekapTransaksiHarian($P{TANGGAL_INPUT} )]]>
+		<![CDATA[CALL CetakLaporanTransaksi($P{TANGGAL_AWAL}, $P{TANGGAL_AKHIR}  )]]>
 	</queryString>
 	<field name="tanggal" class="java.sql.Date">
 		<property name="com.jaspersoft.studio.field.name" value="tanggal"/>
@@ -93,15 +94,13 @@
 				</textElement>
 				<text><![CDATA[REKAP PENJUALAN]]></text>
 			</staticText>
-			<staticText>
-				<reportElement x="206" y="40" width="50" height="20" uuid="9f6e9952-a6a3-44ef-a270-001e4ce0891b"/>
-				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font isBold="true"/>
-				</textElement>
-				<text><![CDATA[Tanggal :]]></text>
-			</staticText>
+			<line>
+				<reportElement x="2" y="80" width="550" height="1" uuid="69b48686-d638-45d5-b499-6a5a922b1199">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+			</line>
 			<textField>
-				<reportElement x="256" y="40" width="100" height="20" uuid="16fac960-5afd-4623-b230-0bb0f46028d3"/>
+				<reportElement x="209" y="40" width="186" height="20" uuid="6fa63fdc-e248-4c1f-a300-705bac5b579d"/>
 				<box>
 					<pen lineWidth="1.0" lineStyle="Dotted"/>
 					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -112,13 +111,15 @@
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font isBold="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$P{TANGGAL_INPUT}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{TANGGAL_AWAL}  + " s/d " +  $P{TANGGAL_AKHIR}]]></textFieldExpression>
 			</textField>
-			<line>
-				<reportElement x="2" y="80" width="550" height="1" uuid="69b48686-d638-45d5-b499-6a5a922b1199">
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-				</reportElement>
-			</line>
+			<staticText>
+				<reportElement x="159" y="40" width="50" height="20" uuid="a555e420-ad60-4df0-9e18-123cfec0380f"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Tanggal :]]></text>
+			</staticText>
 		</band>
 	</title>
 	<columnHeader>
@@ -244,7 +245,7 @@
 		</band>
 	</columnHeader>
 	<detail>
-		<band height="19" splitType="Stretch">
+		<band height="18" splitType="Stretch">
 			<textField>
 				<reportElement x="2" y="0" width="18" height="18" uuid="712f0484-59f8-42be-9816-60aa9fcdb0ef">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -375,8 +376,12 @@
   new java.util.Locale("id","ID")
 ).format(new java.util.Date())]]></textFieldExpression>
 			</textField>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="58">
 			<textField isBlankWhenNull="true">
-				<reportElement x="495" y="20" width="59" height="19" uuid="ab8bfd62-1063-40f6-821e-923e56423601">
+				<reportElement x="476" y="20" width="79" height="19" uuid="ab8bfd62-1063-40f6-821e-923e56423601">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<box>
@@ -391,7 +396,7 @@
     : new java.text.DecimalFormat("#,##0.00").format($F{TOTALBERAT})]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="495" y="0" width="59" height="20" uuid="b6a4dd27-213c-45f3-b62a-ac2e1d9931fd"/>
+				<reportElement x="476" y="0" width="79" height="20" uuid="b6a4dd27-213c-45f3-b62a-ac2e1d9931fd"/>
 				<box>
 					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
@@ -404,7 +409,7 @@
 				<text><![CDATA[Gram]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="465" y="0" width="30" height="20" uuid="88392aba-ee85-4fc2-9868-b98c65d8b6a0"/>
+				<reportElement x="430" y="0" width="46" height="20" uuid="88392aba-ee85-4fc2-9868-b98c65d8b6a0"/>
 				<box>
 					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
@@ -417,7 +422,7 @@
 				<text><![CDATA[Pt]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement x="465" y="20" width="30" height="19" uuid="4160f662-b4eb-4e9b-93ce-f394641c9de1"/>
+				<reportElement x="430" y="20" width="46" height="19" uuid="4160f662-b4eb-4e9b-93ce-f394641c9de1"/>
 				<box>
 					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
@@ -428,7 +433,7 @@
 				<textFieldExpression><![CDATA[$F{TOTALPOTONG}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="406" y="20" width="59" height="19" uuid="c9442d12-da46-4254-8d06-ec3306604ac7"/>
+				<reportElement x="371" y="20" width="59" height="19" uuid="c9442d12-da46-4254-8d06-ec3306604ac7"/>
 				<box>
 					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
@@ -441,7 +446,7 @@
 				<text><![CDATA[Jumlah]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="406" y="39" width="59" height="19" uuid="87bf47bd-88bd-4b87-9e6a-4365fd73c9a0"/>
+				<reportElement x="371" y="39" width="59" height="19" uuid="87bf47bd-88bd-4b87-9e6a-4365fd73c9a0"/>
 				<box>
 					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
@@ -451,10 +456,10 @@
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font isBold="true"/>
 				</textElement>
-				<text><![CDATA[Jumlah]]></text>
+				<text><![CDATA[Total]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement x="465" y="39" width="89" height="19" uuid="e2ba7bf0-6311-4179-a1e7-c248fabac439">
+				<reportElement x="430" y="39" width="125" height="19" uuid="e2ba7bf0-6311-4179-a1e7-c248fabac439">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<box>
@@ -467,5 +472,5 @@
 				<textFieldExpression><![CDATA["Rp. " + new java.text.DecimalFormat("#,##0").format($F{TOTALHARGA}).replace(",", ".")]]></textFieldExpression>
 			</textField>
 		</band>
-	</pageFooter>
+	</summary>
 </jasperReport>

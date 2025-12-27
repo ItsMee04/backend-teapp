@@ -373,7 +373,8 @@ class CetakBarcodeProduk extends Controller
             $route_name,
             $expiration,
             [
-                'TANGGAL_INPUT' => $request->TANGGAL_INPUT
+                'TANGGAL_AWAL' => $request->TANGGAL_AWAL,
+                'TANGGAL_AKHIR' => $request->TANGGAL_AKHIR
             ] // Parameter yang dibutuhkan oleh PrintRekapPenjualan
         );
 
@@ -389,10 +390,15 @@ class CetakBarcodeProduk extends Controller
             abort(401, 'Invalid signature.');
         }
 
-        $params = $request->get('TANGGAL_INPUT');
+        $TANGGAL_AWAL = $request->get('TANGGAL_AWAL');
+        $TANGGAL_AKHIR = $request->get('TANGGAL_AKHIR');
 
-        if (!$params) {
-            abort(400, 'Tanggal tidak ditemukan');
+        if (!$TANGGAL_AWAL) {
+            abort(400, 'Tanggal awal tidak ditemukan');
+        }
+
+        if (!$TANGGAL_AKHIR) {
+            abort(400, 'Tanggal akhir tidak ditemukan');
         }
 
         $jasper_file = resource_path('reports/RekapPenjualanHarian.jasper');
@@ -400,7 +406,8 @@ class CetakBarcodeProduk extends Controller
         $db = config('database.connections.mysql');
 
         $parameters = [
-            'TANGGAL_INPUT' => $params,
+            'TANGGAL_AWAL' => $TANGGAL_AWAL,
+            'TANGGAL_AKHIR' => $TANGGAL_AKHIR
         ];
 
         try {
@@ -408,7 +415,7 @@ class CetakBarcodeProduk extends Controller
             $tempDir = storage_path('app/temp');
             if (!file_exists($tempDir)) mkdir($tempDir, 0777, true);
 
-            $outputFile = $tempDir . '/RekapPenjualan-' . $params;
+           $outputFile = $tempDir . '/LaporanPenjualan-' . $TANGGAL_AWAL.' _sd_ '.$TANGGAL_AKHIR;
 
             $jasper = new \PHPJasper\PHPJasper;
             $jasper->process(
@@ -438,7 +445,7 @@ class CetakBarcodeProduk extends Controller
 
             return response($pdfContent, 200, [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="REKAP-PENJUALAN-' . $params . '.pdf"',
+                'Content-Disposition' => 'inline; filename="LAPORAN-PENJUALAN-' . $TANGGAL_AWAL.' _sd_ '. $TANGGAL_AKHIR. '.pdf"',
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Gagal membuat laporan: ' . $e->getMessage()], 500);
@@ -456,7 +463,8 @@ class CetakBarcodeProduk extends Controller
             $route_name,
             $expiration,
             [
-                'TANGGAL_INPUT' => $request->TANGGAL_INPUT
+                'TANGGAL_AWAL' => $request->TANGGAL_AWAL,
+                'TANGGAL_AKHIR' => $request->TANGGAL_AKHIR
             ] // Parameter yang dibutuhkan oleh PrintRekapPembelian
         );
 
@@ -472,9 +480,14 @@ class CetakBarcodeProduk extends Controller
             abort(401, 'Invalid signature.');
         }
 
-        $params = $request->get('TANGGAL_INPUT');
+        $TANGGAL_AWAL = $request->get('TANGGAL_AWAL');
+        $TANGGAL_AKHIR = $request->get('TANGGAL_AKHIR');
 
-        if (!$params) {
+        if (!$TANGGAL_AWAL) {
+            abort(400, 'Tanggal tidak ditemukan');
+        }
+
+        if (!$TANGGAL_AKHIR) {
             abort(400, 'Tanggal tidak ditemukan');
         }
 
@@ -483,7 +496,8 @@ class CetakBarcodeProduk extends Controller
         $db = config('database.connections.mysql');
 
         $parameters = [
-            'TANGGAL_INPUT' => $params,
+            'TANGGAL_AWAL' => $TANGGAL_AWAL,
+            'TANGGAL_AKHIR' => $TANGGAL_AKHIR
         ];
 
         try {
@@ -491,7 +505,7 @@ class CetakBarcodeProduk extends Controller
             $tempDir = storage_path('app/temp');
             if (!file_exists($tempDir)) mkdir($tempDir, 0777, true);
 
-            $outputFile = $tempDir . '/RekapPembelian-' . $params;
+            $outputFile = $tempDir . '/LaporanPembelian-' . $TANGGAL_AWAL.' _sd_ '.$TANGGAL_AKHIR;
 
             $jasper = new \PHPJasper\PHPJasper;
             $jasper->process(
@@ -521,7 +535,7 @@ class CetakBarcodeProduk extends Controller
 
             return response($pdfContent, 200, [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="REKAP-PEMBELIAN-' . $params . '.pdf"',
+                'Content-Disposition' => 'inline; filename="LAPORAN-PEMBELIAN-' . $TANGGAL_AWAL.' _sd_ '. $TANGGAL_AKHIR. '.pdf"',
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Gagal membuat laporan: ' . $e->getMessage()], 500);
@@ -538,8 +552,8 @@ class CetakBarcodeProduk extends Controller
             $route_name,
             $expiration,
             [
-                'p_bulan' => $request->BULAN,
-                'p_tahun' => $request->TAHUN,
+                'TANGGAL_AWAL' => $request->TANGGAL_AWAL,
+                'TANGGAL_AKHIR' => $request->TANGGAL_AKHIR,
             ] // Parameter yang dibutuhkan oleh PrintRekapPembelian
         );
 
@@ -554,14 +568,14 @@ class CetakBarcodeProduk extends Controller
             abort(401, 'Invalid signature.');
         }
 
-        $bulan = $request->p_bulan;
-        $tahun = $request->p_tahun;
+        $TANGGAL_AWAL = $request->TANGGAL_AWAL;
+        $TANGGAL_AKHIR = $request->TANGGAL_AKHIR;
 
-        if (!$bulan) {
+        if (!$TANGGAL_AWAL) {
             abort(400, 'Bulan tidak ditemukan');
         }
 
-        if (!$bulan) {
+        if (!$TANGGAL_AKHIR) {
             abort(400, 'Tahun tidak ditemukan');
         }
 
@@ -570,8 +584,8 @@ class CetakBarcodeProduk extends Controller
         $db = config('database.connections.mysql');
 
         $parameters = [
-            'p_bulan' => $bulan,
-            'p_tahun' => $tahun,
+            'TANGGAL_AWAL' => $TANGGAL_AWAL,
+            'TANGGAL_AKHIR' => $TANGGAL_AKHIR,
         ];
 
         try {
@@ -579,7 +593,7 @@ class CetakBarcodeProduk extends Controller
             $tempDir = storage_path('app/temp');
             if (!file_exists($tempDir)) mkdir($tempDir, 0777, true);
 
-            $outputFile = $tempDir . '/RekapPembelian-' . $bulan.$tahun;
+            $outputFile = $tempDir . '/LaporanStok-' . $TANGGAL_AWAL.' _sd_ '.$TANGGAL_AKHIR;
 
             $jasper = new \PHPJasper\PHPJasper;
             $jasper->process(
@@ -609,7 +623,181 @@ class CetakBarcodeProduk extends Controller
 
             return response($pdfContent, 200, [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="LAPORAN-STOK-' . $bulan.$tahun. '.pdf"',
+                'Content-Disposition' => 'inline; filename="LAPORAN-STOK-' . $TANGGAL_AWAL.' _sd_ '. $TANGGAL_AKHIR. '.pdf"',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Gagal membuat laporan: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function getSignedLaporanNampan(Request $request)
+    {
+        // Gunakan nama route untuk cetak nota offtake
+        $route_name = 'produk.cetak_laporannampan';
+        $expiration = now()->addMinutes(5); // URL akan kadaluarsa dalam 5 menit
+
+        $signedUrl = URL::temporarySignedRoute(
+            $route_name,
+            $expiration,
+            [
+                'TANGGAL_AWAL' => $request->TANGGAL_AWAL,
+                'TANGGAL_AKHIR' => $request->TANGGAL_AKHIR,
+            ] // Parameter yang dibutuhkan oleh PrintRekapPembelian
+        );
+
+        return response()->json(['url' => $signedUrl]);
+    }
+
+    public function PrintLaporanNampan(Request $request){
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
+
+        if (!$request->hasValidSignature()) {
+            abort(401, 'Invalid signature.');
+        }
+
+        $TANGGAL_AWAL = $request->TANGGAL_AWAL;
+        $TANGGAL_AKHIR = $request->TANGGAL_AKHIR;
+
+        if (!$TANGGAL_AWAL) {
+            abort(400, 'Bulan tidak ditemukan');
+        }
+
+        if (!$TANGGAL_AKHIR) {
+            abort(400, 'Tahun tidak ditemukan');
+        }
+
+        $jasper_file = resource_path('reports/CetakLaporanNampan.jasper');
+
+        $db = config('database.connections.mysql');
+
+        $parameters = [
+            'TANGGAL_AWAL' => $TANGGAL_AWAL,
+            'TANGGAL_AKHIR' => $TANGGAL_AKHIR,
+        ];
+
+        try {
+            // ❗ Simpan ke folder temp Laravel (AMAN)
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) mkdir($tempDir, 0777, true);
+
+            $outputFile = $tempDir . '/LaporanNampan-' . $TANGGAL_AWAL.' _sd_ '.$TANGGAL_AKHIR;
+            $jasper = new \PHPJasper\PHPJasper;
+            $jasper->process(
+                $jasper_file,
+                $outputFile,
+                [
+                    'format' => ['pdf'],
+                    'params' => $parameters,
+                    'db_connection' => [
+                        'driver' => 'mysql',
+                        'host' => $db['host'],
+                        'port' => $db['port'],
+                        'database' => $db['database'],
+                        'username' => $db['username'],
+                        'password' => $db['password'],
+                    ],
+                ]
+            )->execute();
+
+            $pdfPath = $outputFile . '.pdf';
+
+            // ❗ Baca isi PDF
+            $pdfContent = file_get_contents($pdfPath);
+
+            // ❗ Hapus file setelah dibaca
+            unlink($pdfPath);
+
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="LAPORAN-NAMPAN-' . $TANGGAL_AWAL.' _sd_ '. $TANGGAL_AKHIR. '.pdf"',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Gagal membuat laporan: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function getSignedLaporanMutasi(Request $request)
+    {
+        // Gunakan nama route untuk cetak nota offtake
+        $route_name = 'produk.cetak_laporanmutasi';
+        $expiration = now()->addMinutes(5); // URL akan kadaluarsa dalam 5 menit
+
+        $signedUrl = URL::temporarySignedRoute(
+            $route_name,
+            $expiration,
+            [
+                'TANGGAL_AWAL' => $request->TANGGAL_AWAL,
+                'TANGGAL_AKHIR' => $request->TANGGAL_AKHIR,
+            ] // Parameter yang dibutuhkan oleh PrintRekapPembelian
+        );
+
+        return response()->json(['url' => $signedUrl]);
+    }
+
+    public function PrintLaporanMutasi(Request $request){
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
+
+        if (!$request->hasValidSignature()) {
+            abort(401, 'Invalid signature.');
+        }
+
+        $TANGGAL_AWAL = $request->TANGGAL_AWAL;
+        $TANGGAL_AKHIR = $request->TANGGAL_AKHIR;
+
+        if (!$TANGGAL_AWAL) {
+            abort(400, 'Bulan tidak ditemukan');
+        }
+
+        if (!$TANGGAL_AKHIR) {
+            abort(400, 'Tahun tidak ditemukan');
+        }
+
+        $jasper_file = resource_path('reports/CetakLaporanMutasi.jasper');
+
+        $db = config('database.connections.mysql');
+
+        $parameters = [
+            'TANGGAL_AWAL' => $TANGGAL_AWAL,
+            'TANGGAL_AKHIR' => $TANGGAL_AKHIR,
+        ];
+
+        try {
+            // ❗ Simpan ke folder temp Laravel (AMAN)
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) mkdir($tempDir, 0777, true);
+
+            $outputFile = $tempDir . '/LaporanMutasi-' . $TANGGAL_AWAL.' _sd_ '.$TANGGAL_AKHIR;
+            $jasper = new \PHPJasper\PHPJasper;
+            $jasper->process(
+                $jasper_file,
+                $outputFile,
+                [
+                    'format' => ['pdf'],
+                    'params' => $parameters,
+                    'db_connection' => [
+                        'driver' => 'mysql',
+                        'host' => $db['host'],
+                        'port' => $db['port'],
+                        'database' => $db['database'],
+                        'username' => $db['username'],
+                        'password' => $db['password'],
+                    ],
+                ]
+            )->execute();
+
+            $pdfPath = $outputFile . '.pdf';
+
+            // ❗ Baca isi PDF
+            $pdfContent = file_get_contents($pdfPath);
+
+            // ❗ Hapus file setelah dibaca
+            unlink($pdfPath);
+
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="LAPORAN-MUTASI-' . $TANGGAL_AWAL.' _sd_ '. $TANGGAL_AKHIR. '.pdf"',
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Gagal membuat laporan: ' . $e->getMessage()], 500);
@@ -619,7 +807,7 @@ class CetakBarcodeProduk extends Controller
     public function CompileReports()
     {
         // Target file JRXML
-        $input_jrxml = resource_path('reports/CetakLaporanHarianStok.jrxml');
+        $input_jrxml = resource_path('reports/CetakLaporanMutasi.jrxml');
         $output_dir = resource_path('reports'); // Output .jasper di folder reports/
 
         if (!file_exists($input_jrxml)) {
@@ -636,8 +824,8 @@ class CetakBarcodeProduk extends Controller
             )->execute();
 
             return response()->json([
-                'message' => 'Kompilasi CetakLaporanHarianStok.jrxml berhasil!',
-                'output_file' => $output_dir . '/CetakLaporanHarianStok.jasper'
+                'message' => 'Kompilasi CetakLaporanMutasi.jrxml berhasil!',
+                'output_file' => $output_dir . '/CetakLaporanMutasi.jasper'
             ]);
         } catch (\Exception $e) {
             // Jika ini gagal, cek kembali JRXML Anda di Jaspersoft Studio!
