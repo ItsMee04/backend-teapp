@@ -169,6 +169,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('pelanggan/getPelangganByID/{id}', [PelangganController::class, 'getPelangganByID']);
     Route::put('pelanggan/updatePelanggan/{id}', [PelangganController::class, 'updatePelanggan']);
     Route::post('pelanggan/deletePelanggan', [PelangganController::class, 'deletePelanggan']);
+    Route::get('pelanggan/getUlangTahunPelanggan', [PelangganController::class, 'getUlangTahunPelanggan']);
 
     // API TEMPLATE PESAN
     Route::get('pesan/getPesan', [TemplatePesanController::class, 'getPesan']);
@@ -264,6 +265,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/laporan/get-signed-url-laporanstok', [CetakBarcodeProduk::class, 'getSignedLaporanStok']);
     Route::post('/laporan/get-signed-url-laporannampan', [CetakBarcodeProduk::class, 'getSignedLaporanNampan']);
     Route::post('/laporan/get-signed-url-laporanmutasi', [CetakBarcodeProduk::class, 'getSignedLaporanMutasi']);
+    Route::post('/laporan/get-signed-url-laporanofftake', [CetakBarcodeProduk::class, 'getSignedLaporanOfftake']);
 });
 
 Route::post('produk/getProdukByBarcode', [ProdukController::class, 'getProdukByBarcode']);
@@ -276,4 +278,5 @@ Route::get('/rekappembelian/cetakrekappembelian', [CetakBarcodeProduk::class, 'P
 Route::get('/laporan/cetaklaporanstok', [CetakBarcodeProduk::class, 'PrintLaporanStok'])->name('produk.cetak_laporanstok'); // Nama route yang baru
 Route::get('/laporan/cetaklaporannampan', [CetakBarcodeProduk::class, 'PrintLaporanNampan'])->name('produk.cetak_laporannampan'); // Nama route yang baru
 Route::get('/laporan/cetaklaporanmutasi', [CetakBarcodeProduk::class, 'PrintLaporanMutasi'])->name('produk.cetak_laporanmutasi'); // Nama route yang baru
+Route::get('/laporan/cetaklaporanofftake', [CetakBarcodeProduk::class, 'PrintLaporanOfftake'])->name('produk.cetak_laporanofftake'); // Nama route yang baru
 Route::post('/compile/reports', [CetakBarcodeProduk::class, 'CompileReports']);

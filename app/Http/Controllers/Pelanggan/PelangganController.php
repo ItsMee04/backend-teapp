@@ -123,4 +123,28 @@ class PelangganController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Pelanggan Berhasil Dihapus.']);
     }
+
+    public function getUlangTahunPelanggan()
+    {
+        $today = now();
+
+        $pelanggan = Pelanggan::whereMonth('tanggal', $today->month)
+            ->whereDay('tanggal', $today->day)
+            ->get();
+
+        if($pelanggan->isEmpty()){
+            return response()->json([
+                'status'    => 404,
+                'success'   => false,
+                'message'   => 'Data pelanggan tidak ditemukan',
+                'data'      => []
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data pelanggan ditemukan',
+            'data'    => $pelanggan
+        ]);
+    }
 }
