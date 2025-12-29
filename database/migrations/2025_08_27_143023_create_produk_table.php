@@ -24,7 +24,7 @@ return new class extends Migration
             $table->unsignedBigInteger('harga_jual');
             $table->integer('harga_beli')->default(0);
             $table->text('keterangan')->nullable();
-            $table->unsignedBigInteger('kondisi_id')->nullable();
+            $table->unsignedBigInteger('kondisi_id')->nullable()->default(1);
             $table->string('image_produk', 100)->nullable();
             $table->integer('status');
             $table->timestamps();

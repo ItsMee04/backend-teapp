@@ -157,7 +157,7 @@ class TransaksiController extends Controller
         }
 
         // 3. Set Rekening ID secara statis ke ID 1
-        $rekeningIdStatis = 1;
+        $rekeningIdStatis = Saldo::where('status', 1)->first()->id;
         $rekening = Saldo::find($rekeningIdStatis);
 
         if (!$rekening) {

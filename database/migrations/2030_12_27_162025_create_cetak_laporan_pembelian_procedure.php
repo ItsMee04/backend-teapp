@@ -28,10 +28,11 @@ return new class extends Migration
                     pr.berat,
                     k.karat,
                     kp.harga_beli AS harga,
+                    pm.total AS hargatotal,
 
                     /* Menghitung TOTAL menggunakan Window Function */
-                    SUM(pr.berat) OVER() AS TOTALBERAT,
-                    SUM(kp.harga_beli) OVER() AS TOTALHARGA,
+                    SUM(kp.berat) OVER() AS TOTALBERAT,
+                    SUM(pm.total) OVER() AS TOTALTRANSAKSI,
                     COUNT(*) OVER() AS TOTALPOTONG
 
                 FROM pembelian pm
@@ -39,7 +40,6 @@ return new class extends Migration
                 JOIN produk pr ON kp.produk_id = pr.id
                 JOIN jenis_produk jp ON pr.jenisproduk_id = jp.id
                 JOIN karat k ON pr.karat_id = k.id
-
                 WHERE pm.status = 2
                 AND DATE(pm.tanggal) BETWEEN TANGGAL_AWAL AND TANGGAL_AKHIR;
             END;

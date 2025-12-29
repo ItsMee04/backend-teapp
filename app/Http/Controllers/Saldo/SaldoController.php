@@ -11,7 +11,7 @@ class SaldoController extends Controller
 {
     public function getSaldo()
     {
-        $data = Saldo::where('status', 1)->get();
+        $data = Saldo::all();
 
         if ($data->isEmpty()) {
             return response()->json([
@@ -40,11 +40,19 @@ class SaldoController extends Controller
             'saldo'     => 'nullable|integer',
         ]);
 
+        // 1. Cek apakah sudah ada rekening ini dengan status aktif (1)
+        $isRekeningAktifExist = Saldo::where('status', 1)
+            ->exists();
+
+        // 2. Tentukan status berdasarkan hasil pengecekan
+        // Jika ada yang aktif maka status = 0 (tidak aktif), jika tidak ada maka status = 1 (aktif)
+        $status = $isRekeningAktifExist ? 0 : 1;
+
         $data = Saldo::create([
             'rekening'  => toUpper($request->rekening),
             'saldo'     => $request->saldo,
             'oleh'      => Auth::user()->id,
-            'status'    => 1,
+            'status'    => $status,
         ]);
 
         return response()->json([
@@ -62,9 +70,11 @@ class SaldoController extends Controller
         ];
 
         $request->validate([
+            'id'        => 'required',
             'rekening'  => 'required',
             'saldo'     => 'nullable|integer',
-        ]);
+            'status'    => 'required|in:0,1' // Tambahkan validasi status jika dikirim dari frontend
+        ], $message);
 
         $data = Saldo::where('id', $request->id)->first();
 
@@ -76,13 +86,23 @@ class SaldoController extends Controller
             ]);
         }
 
-        $data->rekening = $request->rekening;
+        // LOGIKA UTAMA: Jika user ingin mengubah status rekening ini menjadi AKTIF (1)
+        if ($request->status == 1) {
+            // Matikan semua rekening lain (status 0) yang memiliki nama rekening yang sama (atau seluruh tabel jika global)
+            Saldo::where('id', '!=', $request->id) // Kecuali data yang sedang diupdate
+                ->where('status', 1)
+                ->update(['status' => 0]);
+        }
+
+        // Update data saat ini
+        $data->rekening = toUpper($request->rekening);
         $data->total    = $request->saldo ?? 0;
+        $data->status   = $request->status;
         $data->save();
 
         return response()->json([
             'success'   => true,
-            'message'   => "Data berhasil di update",
+            'message'   => "Data berhasil diupdate. Hanya satu rekening yang aktif saat ini.",
             'data'      => $data
         ]);
     }
@@ -116,6 +136,5 @@ class SaldoController extends Controller
             'success'   => true,
             'message'   => 'Rekening barhasil dihapus'
         ]);
-
     }
 }

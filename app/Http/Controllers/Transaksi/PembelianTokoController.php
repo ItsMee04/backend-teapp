@@ -337,7 +337,7 @@ class PembelianTokoController extends Controller
                 ->update(['status' => 2]);
 
             // 3. LOGIKA PENGURANGAN SALDO (Statis Rekening ID 1)
-            $rekeningIdStatis = 1;
+            $rekeningIdStatis = Saldo::where('status', 1)->first()->id;
             $rekening = Saldo::find($rekeningIdStatis);
 
             if ($rekening) {

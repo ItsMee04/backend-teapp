@@ -18,6 +18,8 @@ class DatabaseSeeder extends Seeder
             PegawaiSeeder::class,
             RoleSeeder::class,
             UserSeeder::class,
+            KondisiSeeder::class,
+            RekeningSeeder::class,
         ]);
     }
 }
